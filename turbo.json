@@ -26,6 +26,10 @@
 			"persistent": true,
 			"dependsOn": ["^db:migrate"]
 		},
+		"db:seed": {
+			"cache": false,
+			"dependsOn": ["^db:seed"]
+		},
 		"db:studio": {
 			"cache": false,
 			"dependsOn": ["^db:studio"]

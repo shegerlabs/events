@@ -11,12 +11,17 @@
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev --skip-generate",
 		"db:reset": "prisma migrate reset",
+		"db:seed": "prisma db seed",
 		"db:studio": "prisma studio"
 	},
 	"devDependencies": {
+		"tsx": "^4.19.4",
 		"typescript": "latest"
 	},
 	"exports": {
 		".": "./src/index.ts"
+	},
+	"prisma": {
+		"seed": "tsx prisma/seed.ts"
 	}
 }
