@@ -8,6 +8,7 @@
 		"build:admin": "turbo run build --filter=admin",
 		"build:events": "turbo run build --filter=events",
 		"build:utils": "turbo run build --filter=@repo/utils",
+		"build:ui": "turbo run build --filter=@repo/ui",
 		"dev": "turbo run dev",
 		"dev:admin": "turbo run dev --filter=admin",
 		"dev:events": "turbo run dev --filter=events",
