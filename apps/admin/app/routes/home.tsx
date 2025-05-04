@@ -1,6 +1,5 @@
 import { prisma } from '@repo/database'
-import { add } from '@repo/utils/add'
-import { subtract } from '@repo/utils/subtract'
+import { add, subtract } from '@repo/utils'
 import type { Route } from './+types/home'
 export function meta({}: Route.MetaArgs) {
 	return [
