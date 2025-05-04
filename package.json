@@ -1,0 +1,40 @@
+{
+	"name": "monorepo",
+	"private": true,
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"build": "turbo run build",
+		"build:admin": "turbo run build --filter=admin",
+		"build:events": "turbo run build --filter=events",
+		"build:utils": "turbo run build --filter=@repo/utils",
+		"dev": "turbo run dev",
+		"dev:admin": "turbo run dev --filter=admin",
+		"dev:events": "turbo run dev --filter=events",
+		"lint": "turbo run lint",
+		"lint:admin": "turbo run lint --filter=admin",
+		"lint:events": "turbo run lint --filter=events",
+		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
+		"format:admin": "prettier --write \"**/*.{ts,tsx,md}\" --filter=admin",
+		"format:events": "prettier --write \"**/*.{ts,tsx,md}\" --filter=events",
+		"list": "turbo ls"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"engines": {
+		"node": ">=20"
+	},
+	"packageManager": "npm@10.9.2",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"devDependencies": {
+		"prettier": "^3.5.3",
+		"prettier-plugin-tailwindcss": "^0.6.11",
+		"turbo": "^2.5.2",
+		"typescript": "^5.8.3"
+	}
+}

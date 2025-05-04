@@ -1,0 +1,25 @@
+{
+	"name": "@repo/utils",
+	"version": "1.0.0",
+	"type": "module",
+	"keywords": [],
+	"author": "Binalfew",
+	"license": "MIT",
+	"description": "Utility functions for the repo",
+	"exports": {
+		"./add": {
+			"types": "./src/add.ts",
+			"default": "./dist/add.js"
+		},
+		"./subtract": {
+			"types": "./src/subtract.ts",
+			"default": "./dist/subtract.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"typescript": "latest"
+	}
+}
