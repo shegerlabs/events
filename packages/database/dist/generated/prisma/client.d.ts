@@ -3,10 +3,10 @@
  *
  * 🟢 You can import this file directly.
  */
-import * as runtime from "@prisma/client/runtime/library";
-import * as $Class from "./internal/class.js";
-import * as Prisma from "./internal/prismaNamespace.js";
-export * as $Enums from './enums.js';
+import * as runtime from '@prisma/client/runtime/library'
+import * as $Class from './internal/class.js'
+import * as Prisma from './internal/prismaNamespace.js'
+export * as $Enums from './enums.js'
 /**
  * ## Prisma Client
  *
@@ -20,12 +20,17 @@ export * as $Enums from './enums.js';
  *
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
  */
-export declare const PrismaClient: $Class.PrismaClientConstructor;
-export type PrismaClient<ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions, Log = $Class.LogOptions<ClientOptions>, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = $Class.PrismaClient<ClientOptions, Log, ExtArgs>;
-export { Prisma };
+export declare const PrismaClient: $Class.PrismaClientConstructor
+export type PrismaClient<
+	ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
+	Log = $Class.LogOptions<ClientOptions>,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = $Class.PrismaClient<ClientOptions, Log, ExtArgs>
+export { Prisma }
 /**
  * Model User
  *
  */
-export type User = Prisma.UserModel;
+export type User = Prisma.UserModel
 //# sourceMappingURL=client.d.ts.map
