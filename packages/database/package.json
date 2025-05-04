@@ -1,0 +1,22 @@
+{
+	"name": "@repo/database",
+	"version": "1.0.0",
+	"type": "module",
+	"keywords": [],
+	"author": "Binalfew",
+	"license": "MIT",
+	"description": "Database schema for the repo",
+	"scripts": {
+		"build": "tsc",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate dev --skip-generate",
+		"db:reset": "prisma migrate reset",
+		"db:studio": "prisma studio"
+	},
+	"devDependencies": {
+		"typescript": "latest"
+	},
+	"exports": {
+		".": "./src/index.ts"
+	}
+}

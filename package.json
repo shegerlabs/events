@@ -18,7 +18,10 @@
 		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
 		"format:admin": "prettier --write \"**/*.{ts,tsx,md}\" --filter=admin",
 		"format:events": "prettier --write \"**/*.{ts,tsx,md}\" --filter=events",
-		"list": "turbo ls"
+		"list": "turbo ls",
+		"db:generate": "turbo run db:generate",
+		"db:migrate": "turbo run db:migrate",
+		"db:studio": "turbo run db:studio"
 	},
 	"keywords": [],
 	"author": "",

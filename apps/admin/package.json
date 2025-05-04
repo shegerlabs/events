@@ -9,6 +9,7 @@
 		"typecheck": "react-router typegen && tsc -b"
 	},
 	"dependencies": {
+		"@repo/database": "*",
 		"@react-router/express": "^7.5.3",
 		"@react-router/node": "^7.5.3",
 		"@repo/utils": "*",
