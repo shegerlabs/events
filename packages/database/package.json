@@ -8,6 +8,7 @@
 	"description": "Database schema for the repo",
 	"scripts": {
 		"build": "tsc",
+		"db:push": "prisma db push",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev --skip-generate",
 		"db:reset": "prisma migrate reset",

@@ -14,8 +14,573 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model EntityType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  fieldDefinitions FieldDefinition[]
+  sourceFields     FieldDefinition[] @relation("FieldSource")
+  FieldConfig      FieldConfig[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model FieldType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  fieldDefinitions FieldDefinition[]
+  FieldConfig      FieldConfig[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model ValidationType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  validations FieldValidation[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model FieldStatus {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  fieldDefinitions FieldDefinition[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model FieldConfig {
+  id           String     @id @default(cuid())
+  entityTypeId String
+  entityType   EntityType @relation(fields: [entityTypeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  fieldTypeId  String
+  fieldType    FieldType  @relation(fields: [fieldTypeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  fieldName    String     @db.VarChar(255)
+  fieldLabel   String     @db.VarChar(255)
+  required     Boolean
+  default      String?    @db.Text
+  order        Int?
+  metadata     Json?
+  version      Int        @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([entityTypeId, fieldName])
+  @@index([entityTypeId])
+  @@index([fieldTypeId])
+  @@index([fieldName])
+  @@index([deletedAt])
+}
+
+model Country {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  code      String  @unique
+  region    String?
+  subregion String?
+  isActive  Boolean @default(true)
+  metadata  Json?
+  order     Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  participants Participant[]
+  users        User[]
+  tenants      Tenant[]
+
+  @@index([name])
+  @@index([code])
+  @@index([region])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model Language {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  code     String  @unique
+  isActive Boolean @default(true)
+  metadata Json?
+  order    Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  participants Participant[]
+  users        User[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model Title {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String? @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  participants Participant[]
+  users        User[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model Gender {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String? @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  participants Participant[]
+  users        User[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model FieldDefinition {
+  id           String      @id @default(cuid())
+  entityTypeId String
+  entityType   EntityType  @relation(fields: [entityTypeId], references: [id], onDelete: Restrict)
+  name         String
+  label        String
+  description  String?
+  fieldTypeId  String
+  fieldType    FieldType   @relation(fields: [fieldTypeId], references: [id], onDelete: Restrict)
+  isRequired   Boolean     @default(false)
+  isUnique     Boolean     @default(false)
+  isSearchable Boolean     @default(false)
+  isFilterable Boolean     @default(false)
+  isSortable   Boolean     @default(false)
+  defaultValue String?
+  order        Int?
+  statusId     String
+  status       FieldStatus @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  metadata     Json?
+
+  sourceId String?
+  source   EntityType? @relation("FieldSource", fields: [sourceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  validations FieldValidation[]
+
+  @@unique([entityTypeId, name])
+  @@index([entityTypeId])
+  @@index([fieldTypeId])
+  @@index([statusId])
+  @@index([deletedAt])
+  @@index([sourceId])
+}
+
+model FieldValidation {
+  id                String          @id @default(cuid())
+  fieldDefinitionId String
+  fieldDefinition   FieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onDelete: Cascade)
+  validationTypeId  String
+  validationType    ValidationType  @relation(fields: [validationTypeId], references: [id], onDelete: Restrict)
+  value             String?
+  message           String?
+  order             Int?
+  metadata          Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldDefinitionId])
+  @@index([validationTypeId])
+}
+
+model EventStatus {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  events Event[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model UserStatus {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users User[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model VenueStatus {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?
+  order       Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  venues Venue[]
+
+  @@index([name])
+  @@index([code])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
-  password String
+  id                  String      @id @default(cuid())
+  email               String      @unique @db.VarChar(255)
+  username            String      @unique @db.VarChar(255)
+  firstName           String      @db.VarChar(100)
+  lastName            String      @db.VarChar(100)
+  userStatusId        String?
+  userStatus          UserStatus? @relation(fields: [userStatusId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "user_status_fk")
+  countryId           String?
+  country             Country?    @relation(fields: [countryId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "user_country_fk")
+  languageId          String?
+  language            Language?   @relation(fields: [languageId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "user_language_fk")
+  titleId             String?
+  title               Title?      @relation(fields: [titleId], references: [id])
+  genderId            String?
+  gender              Gender?     @relation(fields: [genderId], references: [id])
+  tenantId            String?
+  tenant              Tenant?     @relation(fields: [tenantId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  failedLoginAttempts Int         @default(0) @map("failed_login_attempts")
+  lastFailedLoginAt   DateTime?
+  lockedAt            DateTime?
+  lockReason          String?     @db.Text
+  lockCount           Int         @default(0)
+  autoUnlockAt        DateTime?
+  lastLoginAt         DateTime?
+  metadata            Json?
+  version             Int         @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  roles    Role[]
+  sessions Session[]
+  password Password?
+
+  @@unique([tenantId, email])
+  @@unique([tenantId, username])
+  @@index([tenantId])
+  @@index([tenantId, email, deletedAt])
+  @@index([userStatusId])
+  @@index([deletedAt])
+  @@index([email])
+  @@index([username])
+  @@index([lastLoginAt])
+}
+
+model Password {
+  id     String @id @default(cuid())
+  hash   String @db.VarChar(255)
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  lastChanged DateTime  @default(now())
+  version     Int       @default(1)
+
+  @@index([hash])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  expiresAt DateTime
+  metadata  Json?
+  version   Int      @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
+  @@index([deletedAt])
+}
+
+model Verification {
+  id        String    @id @default(cuid())
+  type      String    @db.VarChar(50)
+  target    String    @db.VarChar(255)
+  secret    String    @db.VarChar(255)
+  algorithm String    @db.VarChar(50)
+  digits    Int
+  period    Int
+  charSet   String    @db.VarChar(255)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([target, type])
+  @@index([type])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique @db.VarChar(100)
+  description String?      @db.Text
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  permissions Permission[]
+  users       User[]
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model Permission {
+  id          String    @id @default(cuid())
+  action      String    @db.VarChar(100)
+  entity      String    @db.VarChar(100)
+  access      String    @db.VarChar(50)
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  roles       Role[]
+
+  @@unique([action, entity, access])
+  @@index([action])
+  @@index([entity])
+  @@index([access])
+  @@index([deletedAt])
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  phone     String   @db.VarChar(50)
+  city      String   @db.VarChar(100)
+  state     String   @db.VarChar(100)
+  countryId String?
+  country   Country? @relation(fields: [countryId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  address  String @db.Text
+  metadata Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  events Event[]
+  users  User[]
+
+  @@index([name])
+  @@index([email])
+  @@index([countryId])
+  @@index([deletedAt])
+}
+
+model Venue {
+  id          String       @id @default(cuid())
+  name        String       @db.VarChar(255)
+  description String?      @db.Text
+  contact     String?      @db.VarChar(255)
+  phone       String?      @db.VarChar(50)
+  email       String?      @db.VarChar(255)
+  address     String?      @db.Text
+  city        String?      @db.VarChar(100)
+  state       String?      @db.VarChar(100)
+  country     String?      @db.VarChar(100)
+  capacity    Int?
+  longitude   Float?       @db.DoublePrecision
+  latitude    Float?       @db.DoublePrecision
+  amenities   String?      @db.Text
+  metadata    Json?
+  statusId    String?
+  status      VenueStatus? @relation(fields: [statusId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  events Event[]
+
+  @@index([name])
+  @@index([city, state, country])
+  @@index([capacity])
+  @@index([deletedAt])
+  @@index([longitude, latitude])
+  @@index([statusId])
+}
+
+model Event {
+  id            String       @id @default(cuid())
+  name          String       @unique @db.VarChar(255)
+  description   String?      @db.Text
+  tenantId      String
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  eventStatusId String?
+  eventStatus   EventStatus? @relation(fields: [eventStatusId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "event_status_fk")
+  startDate     DateTime
+  endDate       DateTime
+  venueId       String?
+  venue         Venue?       @relation(fields: [venueId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  metadata      Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  participants Participant[]
+
+  @@index([tenantId])
+  @@index([eventStatusId])
+  @@index([venueId])
+  @@index([tenantId, eventStatusId])
+  @@index([tenantId, startDate])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
+}
+
+model Participant {
+  id            String    @id @default(cuid())
+  eventId       String
+  event         Event     @relation(fields: [eventId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  firstName     String    @db.VarChar(100)
+  lastName      String    @db.VarChar(100)
+  titleId       String?
+  title         Title?    @relation(fields: [titleId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "participant_title_fk")
+  genderId      String?
+  gender        Gender?   @relation(fields: [genderId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "participant_gender_fk")
+  nationalityId String?
+  nationality   Country?  @relation(fields: [nationalityId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "participant_nationality_fk")
+  languageId    String?
+  language      Language? @relation(fields: [languageId], references: [id], onUpdate: Cascade, onDelete: SetNull, map: "participant_language_fk")
+  status        String    @default("active") @db.VarChar(50)
+
+  metadata Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([eventId])
+  @@index([titleId])
+  @@index([genderId])
+  @@index([nationalityId])
+  @@index([languageId])
+  @@index([status])
+  @@index([deletedAt])
 }

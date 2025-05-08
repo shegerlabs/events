@@ -21,10 +21,17 @@
 			"cache": false,
 			"dependsOn": ["^db:generate"]
 		},
+		"db:reset": {
+			"cache": false,
+			"dependsOn": ["^db:reset"]
+		},
+		"db:push": {
+			"cache": false,
+			"dependsOn": ["^db:push"]
+		},
 		"db:migrate": {
 			"cache": false,
-			"persistent": true,
-			"dependsOn": ["^db:migrate"]
+			"persistent": true
 		},
 		"db:seed": {
 			"cache": false,
