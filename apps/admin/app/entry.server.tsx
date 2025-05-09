@@ -10,6 +10,7 @@ import type { AppLoadContext, EntryContext } from 'react-router'
 import { ServerRouter } from 'react-router'
 import { getEnv, init } from './lib/env.server'
 import { NonceProvider } from './lib/nonce-provider'
+import { makeTimings } from './lib/timing.server'
 
 export const streamTimeout = 5_000
 
@@ -39,6 +40,10 @@ export default function handleRequest(
 				? 'onAllReady'
 				: 'onShellReady'
 
+		// NOTE: this timing will only include things that are rendered in the shell
+		// and will not include suspended components and deferred loaders
+		const timings = makeTimings('render', 'renderToPipeableStream')
+
 		const { pipe, abort } = renderToPipeableStream(
 			<NonceProvider value={nonce}>
 				<ServerRouter context={routerContext} url={request.url} nonce={nonce} />
@@ -50,6 +55,8 @@ export default function handleRequest(
 					const stream = createReadableStreamFromReadable(body)
 
 					responseHeaders.set('Content-Type', 'text/html')
+					responseHeaders.append('Server-Timing', timings.toString())
+
 					contentSecurity(responseHeaders, {
 						crossOriginEmbedderPolicy: false,
 						contentSecurityPolicy: {

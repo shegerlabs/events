@@ -11,6 +11,7 @@
 	"dependencies": {
 		"@conform-to/react": "^1.5.0",
 		"@conform-to/zod": "^1.5.0",
+		"@epic-web/cachified": "^5.5.2",
 		"@nichtsam/helmet": "^0.3.0",
 		"@radix-ui/react-slot": "^1.2.2",
 		"@react-router/express": "^7.5.3",
