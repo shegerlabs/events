@@ -1,51 +1,82 @@
 import {
+	data,
 	isRouteErrorResponse,
 	Links,
 	Meta,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useLoaderData,
+	useRouteLoaderData,
 } from 'react-router'
 
 import type { Route } from './+types/root'
 import './app.css'
 import Navbar from './components/navbar'
+import { ClientHintCheck, getHints } from './lib/client-hints'
+import { pipeHeaders } from './lib/headers.server'
+import { useNonce } from './lib/nonce-provider'
+import { getTheme } from './lib/theme.server'
+import { getDomainUrl } from './lib/utils'
+import { useOptionalTheme } from './routes/resources+/theme-switch'
 
-export const links: Route.LinksFunction = () => [
-	{ rel: 'preconnect', to: 'https://fonts.googleapis.com' },
-	{
-		rel: 'preconnect',
-		to: 'https://fonts.gstatic.com',
-		crossOrigin: 'anonymous',
-	},
-	{
-		rel: 'stylesheet',
-		to: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
-	},
-]
+export const meta: Route.MetaFunction = ({ data }) => {
+	return [
+		{ title: data ? 'Admin' : 'Error | Admin' },
+		{ name: 'description', content: `Admin` },
+	]
+}
+
+export const headers: Route.HeadersFunction = pipeHeaders
+
+export async function loader({ request }: Route.LoaderArgs) {
+	return data({
+		requestInfo: {
+			hints: getHints(request),
+			origin: getDomainUrl(request),
+			path: new URL(request.url).pathname,
+			userPrefs: {
+				theme: getTheme(request),
+			},
+		},
+	})
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
+	const data = useRouteLoaderData('root')
+	const nonce = useNonce()
+	const theme = useOptionalTheme()
+
 	return (
-		<html lang="en">
+		<html lang="en" className={`${theme} h-full overflow-hidden`}>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<ClientHintCheck nonce={nonce} />
 				<Meta />
 				<Links />
 			</head>
-			<body>
+			<body className="bg-background text-foreground">
 				{children}
-				<ScrollRestoration />
-				<Scripts />
+				<script
+					nonce={nonce}
+					dangerouslySetInnerHTML={{
+						__html: `window.ENV = ${JSON.stringify(data?.ENV)}`,
+					}}
+				/>
+				<ScrollRestoration nonce={nonce} />
+				<Scripts nonce={nonce} />
 			</body>
 		</html>
 	)
 }
 
 export default function App() {
+	const data = useLoaderData<typeof loader>()
+
 	return (
 		<div className="flex min-h-screen flex-col">
-			<Navbar />
+			<Navbar theme={data.requestInfo.userPrefs.theme} />
 			<main className="flex-1">
 				<Outlet />
 			</main>
