@@ -12,5 +12,5 @@ export async function loader({ context }: Route.LoaderArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-	return <>Home</>
+	return <></>
 }

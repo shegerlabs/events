@@ -13,13 +13,18 @@ import {
 import type { Route } from './+types/root'
 import './app.css'
 import Navbar from './components/navbar'
+import { ProgressBar } from './components/progress-bar'
+import { useToast } from './components/toaster'
+import { Toaster } from './components/ui/sonner'
 import { ClientHintCheck, getHints } from './lib/client-hints'
 import { getEnv } from './lib/env.server'
 import { pipeHeaders } from './lib/headers.server'
 import { useNonce } from './lib/nonce-provider'
 import { getTheme } from './lib/theme.server'
-import { getDomainUrl } from './lib/utils'
-import { useOptionalTheme } from './routes/resources+/theme-switch'
+import { makeTimings } from './lib/timing.server'
+import { getToast } from './lib/toast.server'
+import { combineHeaders, getDomainUrl } from './lib/utils'
+import { useOptionalTheme, useTheme } from './routes/resources+/theme-switch'
 
 export const meta: Route.MetaFunction = ({ data }) => {
 	return [
@@ -31,17 +36,29 @@ export const meta: Route.MetaFunction = ({ data }) => {
 export const headers: Route.HeadersFunction = pipeHeaders
 
 export async function loader({ request }: Route.LoaderArgs) {
-	return data({
-		requestInfo: {
-			hints: getHints(request),
-			origin: getDomainUrl(request),
-			path: new URL(request.url).pathname,
-			userPrefs: {
-				theme: getTheme(request),
+	const timings = makeTimings('root loader')
+	const { toast, headers: toastHeaders } = await getToast(request)
+
+	return data(
+		{
+			requestInfo: {
+				hints: getHints(request),
+				origin: getDomainUrl(request),
+				path: new URL(request.url).pathname,
+				userPrefs: {
+					theme: getTheme(request),
+				},
 			},
+			ENV: getEnv(),
+			toast,
 		},
-		ENV: getEnv(),
-	})
+		{
+			headers: combineHeaders(
+				{ 'Server-Timing': timings.toString() },
+				toastHeaders,
+			),
+		},
+	)
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -79,12 +96,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 	const data = useLoaderData<typeof loader>()
+	const theme = useTheme()
+	useToast(data.toast)
 
 	return (
 		<div className="flex min-h-screen flex-col">
 			<Navbar theme={data.requestInfo.userPrefs.theme} />
 			<main className="flex-1">
 				<Outlet />
+				<Toaster closeButton position="top-center" theme={theme} />
+				<ProgressBar />
 			</main>
 		</div>
 	)
