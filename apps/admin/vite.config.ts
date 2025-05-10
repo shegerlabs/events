@@ -35,8 +35,8 @@ export default defineConfig(({ isSsrBuild }) => ({
 	resolve: {
 		alias: {
 			'~': path.resolve(__dirname, './app'),
-			'@': path.resolve(__dirname, './app/components/ui'),
-			'@/icon-name': path.resolve(__dirname, './types/icon-name.d.ts'),
+			// '@': path.resolve(__dirname, './app/components/ui'),
+			// '@/icon-name': path.resolve(__dirname, './types/icon-name.d.ts'),
 		},
 	},
 	server: {

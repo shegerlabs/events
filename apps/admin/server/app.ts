@@ -10,6 +10,11 @@ declare module 'react-router' {
 
 export const app = express()
 
+// Handle Chrome DevTools requests
+app.use('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+	res.status(404).json({ error: 'Not found' })
+})
+
 app.use(
 	createRequestHandler({
 		build: () => import('virtual:react-router/server-build'),

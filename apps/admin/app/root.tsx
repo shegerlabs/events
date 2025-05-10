@@ -14,6 +14,7 @@ import type { Route } from './+types/root'
 import './app.css'
 import Navbar from './components/navbar'
 import { ClientHintCheck, getHints } from './lib/client-hints'
+import { getEnv } from './lib/env.server'
 import { pipeHeaders } from './lib/headers.server'
 import { useNonce } from './lib/nonce-provider'
 import { getTheme } from './lib/theme.server'
@@ -39,6 +40,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 				theme: getTheme(request),
 			},
 		},
+		ENV: getEnv(),
 	})
 }
 
@@ -46,12 +48,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const data = useRouteLoaderData('root')
 	const nonce = useNonce()
 	const theme = useOptionalTheme()
+	const allowIndexing = data?.ENV.ALLOW_INDEXING !== 'false'
 
 	return (
 		<html lang="en" className={`${theme} h-full overflow-hidden`}>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				{allowIndexing ? null : (
+					<meta name="robots" content="noindex, nofollow" />
+				)}
 				<ClientHintCheck nonce={nonce} />
 				<Meta />
 				<Links />
