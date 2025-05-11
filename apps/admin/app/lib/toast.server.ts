@@ -1,23 +1,13 @@
-import { createId as cuid } from '@paralleldrive/cuid2'
 import { createCookieSessionStorage, redirect } from 'react-router'
-import { z } from 'zod'
+import type { ToastInput } from './types'
+import { ToastSchema } from './types'
 import { combineHeaders } from './utils.tsx'
 
 export const toastKey = 'toast'
 
-const ToastSchema = z.object({
-	description: z.string(),
-	id: z.string().default(() => cuid()),
-	title: z.string().optional(),
-	type: z.enum(['message', 'success', 'error']).default('message'),
-})
-
-export type Toast = z.infer<typeof ToastSchema>
-export type ToastInput = z.input<typeof ToastSchema>
-
 export const toastSessionStorage = createCookieSessionStorage({
 	cookie: {
-		name: 'en_toast',
+		name: 'toast',
 		sameSite: 'lax',
 		path: '/',
 		httpOnly: true,

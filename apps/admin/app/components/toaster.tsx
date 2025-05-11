@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { toast as showToast } from 'sonner'
-import { type Toast } from '~/lib/toast.server.ts'
+import type { Toast } from '~/lib/types'
 
 export function useToast(toast?: Toast | null) {
 	useEffect(() => {
