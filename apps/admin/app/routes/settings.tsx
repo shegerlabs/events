@@ -16,15 +16,6 @@ import { SwitchField } from '~/components/switch-field'
 import { TextareaField } from '~/components/textarea-field'
 import { Button } from '~/components/ui/button'
 import { Label } from '~/components/ui/label'
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from '~/components/ui/select'
 import type { Route } from './+types/settings'
 
 export function meta({}: Route.MetaArgs) {
@@ -180,11 +171,6 @@ export default function Settings() {
 							{ value: 'vue', name: 'Vue' },
 							{ value: 'svelte', name: 'Svelte' },
 							{ value: 'angular', name: 'Angular' },
-							{ value: 'ember', name: 'Ember' },
-							{ value: 'next', name: 'Next' },
-							{ value: 'nuxt', name: 'Nuxt' },
-							{ value: 'sapper', name: 'Sapper' },
-							{ value: 'glimmer', name: 'Glimmer' },
 						]}
 					/>
 					{fields.interests.errors && (
@@ -196,22 +182,6 @@ export default function Settings() {
 					<OtpField meta={fields.code} length={6} />
 					{fields.code.errors && <FieldError>{fields.code.errors}</FieldError>}
 				</Field>
-
-				<Select>
-					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Select a fruit" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectGroup>
-							<SelectLabel>Fruits</SelectLabel>
-							<SelectItem value="apple">Apple</SelectItem>
-							<SelectItem value="banana">Banana</SelectItem>
-							<SelectItem value="blueberry">Blueberry</SelectItem>
-							<SelectItem value="grapes">Grapes</SelectItem>
-							<SelectItem value="pineapple">Pineapple</SelectItem>
-						</SelectGroup>
-					</SelectContent>
-				</Select>
 
 				<div className="flex gap-2">
 					<Button type="submit">Submit</Button>

@@ -81,7 +81,7 @@ export function combineHeaders(
 /**
  * Combine multiple response init objects into one (uses combineHeaders)
  */
-export function combineResponseInits(
+export function combineResponses(
 	...responseInits: Array<ResponseInit | null | undefined>
 ) {
 	let combined: ResponseInit = {}

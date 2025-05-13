@@ -4,15 +4,14 @@ import { type IconName } from '~/components/ui/icons/types'
 import { cn } from '~/lib/utils'
 
 export { href }
-export type { IconName }
 
 const sizeClassName = {
-	font: 'w-[1em] h-[1em]',
-	xs: 'w-3 h-3',
-	sm: 'w-4 h-4',
-	md: 'w-5 h-5',
-	lg: 'w-6 h-6',
-	xl: 'w-7 h-7',
+	font: 'size-[1em]',
+	xs: 'size-3',
+	sm: 'size-4',
+	md: 'size-5',
+	lg: 'size-6',
+	xl: 'size-7',
 } as const
 
 type Size = keyof typeof sizeClassName
@@ -33,23 +32,34 @@ const childrenSizeClassName = {
  * Alternatively, if you're not ok with the icon being to the left of the text,
  * you need to wrap the icon and text in a common parent and set the parent to
  * display "flex" (or "inline-flex") with "items-center" and a reasonable gap.
+ *
+ * Pass `title` prop to the `Icon` component to get `<title>` element rendered
+ * in the SVG container, providing this way for accessibility.
  */
 export function Icon({
 	name,
 	size = 'font',
 	className,
+	title,
 	children,
 	...props
 }: SVGProps<SVGSVGElement> & {
 	name: IconName
 	size?: Size
+	title?: string
 }) {
 	if (children) {
 		return (
 			<span
 				className={`inline-flex items-center ${childrenSizeClassName[size]}`}
 			>
-				<Icon name={name} size={size} className={className} {...props} />
+				<Icon
+					name={name}
+					size={size}
+					className={className}
+					title={title}
+					{...props}
+				/>
 				{children}
 			</span>
 		)
@@ -59,6 +69,7 @@ export function Icon({
 			{...props}
 			className={cn(sizeClassName[size], 'inline self-center', className)}
 		>
+			{title ? <title>{title}</title> : null}
 			<use href={`${href}#${name}`} />
 		</svg>
 	)

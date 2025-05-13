@@ -4,9 +4,14 @@ export const iconNames = [
   "update",
   "sun",
   "plus",
+  "pencil-2",
   "moon",
   "laptop",
+  "exit",
   "download",
+  "cross-1",
+  "check",
+  "avatar",
 ] as const
 
 export type IconName = typeof iconNames[number]

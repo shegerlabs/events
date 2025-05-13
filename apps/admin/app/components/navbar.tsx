@@ -1,11 +1,35 @@
-import { Bell, User } from 'lucide-react'
+import { Bell, LogIn } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { Button } from '~/components/ui/button'
 import type { Theme } from '~/lib/theme.server'
 import { ThemeSwitch } from '~/routes/resources+/theme-switch'
+import { UserDropdown } from './user-dropdown'
 
-export default function Navbar({ theme }: { theme: Theme | null }) {
+type User = {
+	id: string
+	username: string
+	firstName: string
+	lastName: string
+	tenantId: string | null
+	roles: {
+		name: string
+		permissions: {
+			action: string
+			entity: string
+			access: string
+		}[]
+	}[]
+	sessions: any[]
+}
+
+export default function Navbar({
+	theme,
+	user,
+}: {
+	theme: Theme | null
+	user: User | null | undefined
+}) {
 	return (
 		<header className="border-border bg-background sticky top-0 z-50 w-full border-b">
 			<div className="flex h-12 w-full items-center justify-between px-4">
@@ -44,9 +68,16 @@ export default function Navbar({ theme }: { theme: Theme | null }) {
 						<Bell className="h-5 w-5" />
 					</Button>
 
-					<Button variant="ghost" size="icon" aria-label="Profile">
-						<User className="h-5 w-5" />
-					</Button>
+					{user ? (
+						<UserDropdown />
+					) : (
+						<Link
+							to="/login"
+							className="hover:text-primary text-sm font-medium transition-colors"
+						>
+							<LogIn className="h-4 w-4" />
+						</Link>
+					)}
 				</div>
 			</div>
 		</header>

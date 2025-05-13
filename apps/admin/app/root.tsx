@@ -10,19 +10,25 @@ import {
 	useRouteLoaderData,
 } from 'react-router'
 
+import { AuthenticityTokenProvider } from 'remix-utils/csrf/react'
+import { HoneypotProvider } from 'remix-utils/honeypot/react'
 import type { Route } from './+types/root'
 import './app.css'
 import Navbar from './components/navbar'
 import { ProgressBar } from './components/progress-bar'
 import { useToast } from './components/toaster'
 import { Toaster } from './components/ui/sonner'
+import { getUser, getUserId, logout } from './lib/auth.server'
 import { ClientHintCheck, getHints } from './lib/client-hints'
+import { csrf } from './lib/csrf.server'
 import { getEnv } from './lib/env.server'
 import { pipeHeaders } from './lib/headers.server'
+import { honeypot } from './lib/honeypot.server'
 import { useNonce } from './lib/nonce-provider'
 import { getTheme } from './lib/theme.server'
-import { makeTimings } from './lib/timing.server'
+import { makeTimings, time } from './lib/timing.server'
 import { getToast } from './lib/toast.server'
+import { useOptionalUser } from './lib/user'
 import { combineHeaders, getDomainUrl } from './lib/utils'
 import { useOptionalTheme, useTheme } from './routes/resources+/theme-switch'
 
@@ -37,10 +43,27 @@ export const headers: Route.HeadersFunction = pipeHeaders
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const timings = makeTimings('root loader')
+	const userId = await time(() => getUserId(request), {
+		timings,
+		type: 'getUserId',
+		desc: 'getUserId in root',
+	})
+	const user = userId ? await getUser(userId) : null
+
+	if (userId && !user) {
+		console.info('something weird happened')
+		// something weird happened... The user is authenticated but we can't find
+		// them in the database. Maybe they were deleted? Let's log them out.
+		await logout({ request, redirectTo: '/' })
+	}
+
 	const { toast, headers: toastHeaders } = await getToast(request)
+	const [csrfToken, csrfCookieHeader] = await csrf.commitToken(request)
+	const honeyProps = await honeypot.getInputProps()
 
 	return data(
 		{
+			user,
 			requestInfo: {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
@@ -51,10 +74,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 			},
 			ENV: getEnv(),
 			toast,
+			honeyProps,
+			csrfToken,
 		},
 		{
 			headers: combineHeaders(
 				{ 'Server-Timing': timings.toString() },
+				csrfCookieHeader ? { 'set-cookie': csrfCookieHeader } : null,
 				toastHeaders,
 			),
 		},
@@ -96,18 +122,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 	const data = useLoaderData<typeof loader>()
+	const user = useOptionalUser()
 	const theme = useTheme()
 	useToast(data.toast)
 
 	return (
-		<div className="flex min-h-screen flex-col">
-			<Navbar theme={data.requestInfo.userPrefs.theme} />
-			<main className="flex-1">
-				<Outlet />
-				<Toaster closeButton position="top-center" theme={theme} />
-				<ProgressBar />
-			</main>
-		</div>
+		<AuthenticityTokenProvider token={data.csrfToken}>
+			<HoneypotProvider {...data.honeyProps}>
+				<div className="flex min-h-screen flex-col">
+					<Navbar theme={data.requestInfo.userPrefs.theme} user={user} />
+					<main className="flex-1">
+						<Outlet />
+						<Toaster closeButton position="top-center" theme={theme} />
+						<ProgressBar />
+					</main>
+				</div>
+			</HoneypotProvider>
+		</AuthenticityTokenProvider>
 	)
 }
 
