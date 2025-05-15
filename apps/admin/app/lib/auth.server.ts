@@ -307,6 +307,27 @@ export async function getUserId(request: Request) {
 	return session.userId
 }
 
+export async function requireUserId(
+	request: Request,
+	{ redirectTo }: { redirectTo?: string | null } = {},
+) {
+	const userId = await getUserId(request)
+	if (!userId) {
+		const requestUrl = new URL(request.url)
+		redirectTo =
+			redirectTo === null
+				? null
+				: (redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`)
+		const loginParams = redirectTo ? new URLSearchParams({ redirectTo }) : null
+		const loginRedirect = ['/login', loginParams?.toString()]
+			.filter(Boolean)
+			.join('?')
+		throw redirect(loginRedirect)
+	}
+
+	return userId
+}
+
 export async function getUser(userId: string) {
 	return await prisma.user.findUnique({
 		where: { id: userId },

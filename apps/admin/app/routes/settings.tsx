@@ -1,11 +1,13 @@
 import { useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
+import { AlertCircle } from 'lucide-react'
 import { data, Form } from 'react-router'
 import { z } from 'zod'
 import { CheckboxField } from '~/components/checkbox-field'
 import { CheckboxGroupField } from '~/components/checkbox-group-field'
 import { CountryPickerField } from '~/components/country-picker-field'
 import { DatePickerField } from '~/components/date-picker-field'
+import { ErrorCard, GeneralErrorBoundary } from '~/components/error-boundary'
 import { Field, FieldError } from '~/components/field'
 import { InputField } from '~/components/input-field'
 import { OtpField } from '~/components/otp-field'
@@ -16,6 +18,7 @@ import { SwitchField } from '~/components/switch-field'
 import { TextareaField } from '~/components/textarea-field'
 import { Button } from '~/components/ui/button'
 import { Label } from '~/components/ui/label'
+import { requireUserWithRoles } from '~/lib/permission.server'
 import type { Route } from './+types/settings'
 
 export function meta({}: Route.MetaArgs) {
@@ -61,7 +64,8 @@ const UserSubscriptionSchema = z.object({
 	code: z.string().length(6, 'Code must be 6 characters long'),
 })
 
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+	await requireUserWithRoles(request, ['admin'])
 	return data({})
 }
 
@@ -195,5 +199,22 @@ export default function Settings() {
 				</div>
 			</Form>
 		</div>
+	)
+}
+
+export function ErrorBoundary() {
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				403: ({ error }) => (
+					<ErrorCard
+						title="Access Denied"
+						description="You don't have permission to access the settings page."
+						details={error?.data?.message}
+						icon={<AlertCircle size={80} className="text-orange-500" />}
+					/>
+				),
+			}}
+		/>
 	)
 }
