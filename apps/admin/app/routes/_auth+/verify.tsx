@@ -1,12 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import {
-	data,
-	Form,
-	useActionData,
-	useSearchParams,
-	type MetaFunction,
-} from 'react-router'
+import { data, Form, useSearchParams, type MetaFunction } from 'react-router'
 import { AuthenticityTokenInput } from 'remix-utils/csrf/react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { ErrorList } from '~/components/error-list'
@@ -57,9 +51,8 @@ export const meta: MetaFunction = () => {
 	return [{ title: 'Setup Accreditation Account' }]
 }
 
-export default function VerifyRoute() {
+export default function VerifyRoute({ actionData }: Route.ComponentProps) {
 	const [searchParams] = useSearchParams()
-	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
 	const type = VerificationTypeSchema.parse(searchParams.get(typeQueryParam))
 	const checkEmail = (

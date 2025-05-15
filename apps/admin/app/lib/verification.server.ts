@@ -80,12 +80,10 @@ export async function isCodeValid({
 	})
 
 	if (!verification) return false
-	const result = verifyTOTP({
+
+	const result = await verifyTOTP({
 		otp: code,
-		secret: verification.secret,
-		algorithm: verification.algorithm,
-		period: verification.period,
-		charSet: verification.charSet,
+		...verification,
 	})
 
 	if (!result) return false
