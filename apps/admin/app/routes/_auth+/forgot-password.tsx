@@ -2,13 +2,14 @@ import { getFormProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import * as E from '@react-email/components'
 import { prisma } from '@repo/database'
-import { data, Form, Link, redirect, useSearchParams } from 'react-router'
+import { data, Form, Link, redirect } from 'react-router'
 import { AuthenticityTokenInput } from 'remix-utils/csrf/react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { ErrorList } from '~/components/error-list'
 import { Field, FieldError } from '~/components/field'
 import { InputField } from '~/components/input-field'
+import { Button } from '~/components/ui/button'
 import {
 	Card,
 	CardContent,
@@ -17,48 +18,40 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Label } from '~/components/ui/label'
-import { StatusButton } from '~/components/ui/status-button'
 import { requireAnonymous } from '~/lib/auth.server'
 import { validateCSRF } from '~/lib/csrf.server'
 import { sendEmail } from '~/lib/email.server'
 import { checkHoneypot } from '~/lib/honeypot.server'
-import { useIsPending } from '~/lib/utils'
 import { prepareVerification } from '~/lib/verification.server'
-import type { Route } from './+types/signup'
-
-const SignupSchema = z.object({
+import type { Route } from './+types/forgot-password'
+const ForgotPasswordSchema = z.object({
 	email: z
 		.string({ required_error: 'Email is required' })
 		.email({ message: 'Email is invalid' })
 		.min(3, { message: 'Email is too short' })
 		.max(100, { message: 'Email is too long' })
 		.transform(value => value.toLowerCase()),
-	redirectTo: z.string().optional(),
 })
-
-export async function loader({ request }: Route.LoaderArgs) {
-	await requireAnonymous(request)
-
-	return data({})
-}
 
 export async function action({ request }: Route.ActionArgs) {
 	await requireAnonymous(request)
 	const formData = await request.formData()
 	await validateCSRF(formData, request.headers)
 	checkHoneypot(formData)
+
 	const submission = await parseWithZod(formData, {
-		schema: SignupSchema.superRefine(async (data, ctx) => {
-			const existingUser = await prisma.user.findUnique({
-				where: { email: data.email },
-				select: { id: true },
+		schema: ForgotPasswordSchema.superRefine(async (data, ctx) => {
+			const user = await prisma.user.findFirst({
+				where: {
+					email: data.email,
+				},
 			})
 
-			if (existingUser) {
+			if (!user) {
 				ctx.addIssue({
-					path: ['username'],
+					path: ['email'],
 					code: z.ZodIssueCode.custom,
-					message: 'A user already exists with this username',
+					message: 'No user found with that email',
 				})
 				return
 			}
@@ -74,18 +67,24 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	const { email } = submission.value
+	const user = await prisma.user.findFirstOrThrow({
+		where: { email },
+		select: { email: true },
+	})
 
 	const { verifyUrl, redirectTo, otp } = await prepareVerification({
 		period: 10 * 60,
 		request,
-		type: 'onboarding',
+		type: 'reset-password',
 		target: email,
 	})
 
 	const response = await sendEmail({
-		to: email,
-		subject: `Welcome to Accreditation!`,
-		react: <SignupEmail onboardingUrl={verifyUrl.toString()} otp={otp} />,
+		to: user.email,
+		subject: `Accreditation Password Reset`,
+		react: (
+			<ForgotPasswordEmail onboardingUrl={verifyUrl.toString()} otp={otp} />
+		),
 	})
 
 	if (response.status === 'success') {
@@ -98,7 +97,7 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 }
 
-export function SignupEmail({
+function ForgotPasswordEmail({
 	onboardingUrl,
 	otp,
 }: {
@@ -109,7 +108,7 @@ export function SignupEmail({
 		<E.Html lang="en" dir="ltr">
 			<E.Container>
 				<h1>
-					<E.Text>Welcome to Accreditation!</E.Text>
+					<E.Text>Epic Notes Password Reset</E.Text>
 				</h1>
 				<p>
 					<E.Text>
@@ -117,7 +116,7 @@ export function SignupEmail({
 					</E.Text>
 				</p>
 				<p>
-					<E.Text>Or click the link to get started:</E.Text>
+					<E.Text>Or click the link:</E.Text>
 				</p>
 				<E.Link href={onboardingUrl}>{onboardingUrl}</E.Link>
 			</E.Container>
@@ -125,22 +124,17 @@ export function SignupEmail({
 	)
 }
 
-export default function SignupRoute({ actionData }: Route.ComponentProps) {
-	const isPending = useIsPending()
-	const [searchParams] = useSearchParams()
-	const redirectTo = searchParams.get('redirectTo')
-
+export default function ForgotPasswordRoute({
+	actionData,
+}: Route.ComponentProps) {
 	const [form, fields] = useForm({
-		id: 'signup-form',
-		constraint: getZodConstraint(SignupSchema),
+		id: 'forgot-password-form',
+		constraint: getZodConstraint(ForgotPasswordSchema),
 		lastResult: actionData?.result,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: SignupSchema })
+			return parseWithZod(formData, { schema: ForgotPasswordSchema })
 		},
 		shouldRevalidate: 'onBlur',
-		defaultValue: {
-			redirectTo,
-		},
 	})
 
 	return (
@@ -149,10 +143,9 @@ export default function SignupRoute({ actionData }: Route.ComponentProps) {
 				<div className="flex flex-col gap-6">
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-xl">Sign Up</CardTitle>
+							<CardTitle className="text-xl">Forgot Password</CardTitle>
 							<CardDescription>
-								Let&apos;s get you started on your journey to becoming
-								accredited
+								No worries, we will send you reset instructions.
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
@@ -163,8 +156,6 @@ export default function SignupRoute({ actionData }: Route.ComponentProps) {
 							>
 								<AuthenticityTokenInput />
 								<HoneypotInputs />
-								<InputField meta={fields.redirectTo} type="hidden" />
-
 								<div className="grid gap-4">
 									<Field>
 										<Label htmlFor={fields.email.id}>Email</Label>
@@ -176,22 +167,16 @@ export default function SignupRoute({ actionData }: Route.ComponentProps) {
 
 									<ErrorList errors={form.errors} id={form.errorId} />
 
-									<StatusButton
-										className="w-full"
-										status={isPending ? 'pending' : (form.status ?? 'idle')}
-										type="submit"
-										disabled={isPending}
-									>
-										Submit
-									</StatusButton>
-								</div>
-								<div className="mt-4 text-center text-sm">
-									Already have an account?{' '}
-									<Link to="/login" className="underline">
-										Sign in
-									</Link>
+									<Button type="submit" className="w-full">
+										Recover Password
+									</Button>
 								</div>
 							</Form>
+							<div className="mt-4 text-center text-sm">
+								<Link to="/login" className="underline">
+									Back to login
+								</Link>
+							</div>
 						</CardContent>
 					</Card>
 				</div>

@@ -1,15 +1,7 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { prisma } from '@repo/database'
-import {
-	data,
-	Form,
-	Link,
-	redirect,
-	useActionData,
-	useLoaderData,
-	useSearchParams,
-} from 'react-router'
+import { data, Form, Link, redirect, useSearchParams } from 'react-router'
 import { AuthenticityTokenInput } from 'remix-utils/csrf/react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { safeRedirect } from 'remix-utils/safe-redirect'
@@ -152,9 +144,10 @@ export async function action({ request }: Route.ActionArgs) {
 	return redirect(safeRedirect(redirectTo), { headers })
 }
 
-export default function SignupRoute() {
-	const { email } = useLoaderData<typeof loader>()
-	const actionData = useActionData<typeof action>()
+export default function SignupRoute({
+	loaderData,
+	actionData,
+}: Route.ComponentProps) {
 	const isPending = useIsPending()
 	const [searchParams] = useSearchParams()
 	const redirectTo = searchParams.get('redirectTo')
@@ -178,7 +171,9 @@ export default function SignupRoute() {
 				<div className="flex flex-col gap-6">
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-xl">Welcome aboard, {email}</CardTitle>
+							<CardTitle className="text-xl">
+								Welcome aboard, {loaderData.email}
+							</CardTitle>
 							<CardDescription>
 								Enter your information to create an account
 							</CardDescription>
