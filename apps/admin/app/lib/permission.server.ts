@@ -90,3 +90,20 @@ export async function requireUserWithPermission(
 	}
 	return user.id
 }
+
+export async function userIsAdmin(request: Request) {
+	const userId = await requireUserId(request)
+	const user = await prisma.user.findFirst({
+		select: { id: true, email: true },
+		where: {
+			id: userId,
+			roles: {
+				some: {
+					name: { in: ['admin'] },
+				},
+			},
+		},
+	})
+
+	return !!user
+}

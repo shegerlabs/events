@@ -6,7 +6,6 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
-	useLoaderData,
 	useRouteLoaderData,
 } from 'react-router'
 
@@ -120,17 +119,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export default function App() {
-	const data = useLoaderData<typeof loader>()
+export default function App({ loaderData }: Route.ComponentProps) {
 	const user = useOptionalUser()
 	const theme = useTheme()
-	useToast(data.toast)
+	useToast(loaderData.toast)
 
 	return (
-		<AuthenticityTokenProvider token={data.csrfToken}>
-			<HoneypotProvider {...data.honeyProps}>
+		<AuthenticityTokenProvider token={loaderData.csrfToken}>
+			<HoneypotProvider {...loaderData.honeyProps}>
 				<div className="flex min-h-screen flex-col">
-					<Navbar theme={data.requestInfo.userPrefs.theme} user={user} />
+					<Navbar theme={loaderData.requestInfo.userPrefs.theme} user={user} />
 					<main className="flex-1">
 						<Outlet />
 						<Toaster closeButton position="top-center" theme={theme} />

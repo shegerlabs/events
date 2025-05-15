@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 
 import { Button } from '~/components/ui/button'
 import type { Theme } from '~/lib/theme.server'
+import { userHasRoles } from '~/lib/user'
 import { ThemeSwitch } from '~/routes/resources+/theme-switch'
 import { UserDropdown } from './user-dropdown'
 
@@ -30,6 +31,8 @@ export default function Navbar({
 	theme: Theme | null
 	user: User | null | undefined
 }) {
+	const isAdmin = user ? userHasRoles(user, ['admin']) : false
+
 	return (
 		<header className="border-border bg-background sticky top-0 z-50 w-full border-b">
 			<div className="flex h-12 w-full items-center justify-between px-4">
@@ -51,7 +54,7 @@ export default function Navbar({
 						</svg>
 					</Link>
 
-					{user && (
+					{isAdmin && (
 						<nav className="flex items-center space-x-6">
 							<Link
 								to="/settings"
