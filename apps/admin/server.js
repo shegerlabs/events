@@ -21,6 +21,10 @@ if (!ALLOW_INDEXING) {
 }
 
 if (DEVELOPMENT) {
+	await import('./mocks/index.ts')
+}
+
+if (DEVELOPMENT) {
 	console.log('Starting development server')
 	const viteDevServer = await import('vite').then(vite =>
 		vite.createServer({

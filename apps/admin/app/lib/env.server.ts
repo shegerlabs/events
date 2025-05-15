@@ -6,6 +6,7 @@ const schema = z.object({
 	SESSION_SECRET: z.string(),
 	HONEYPOT_SECRET: z.string(),
 	ALLOW_INDEXING: z.enum(['true', 'false']).optional(),
+	RESEND_API_KEY: z.string(),
 })
 
 declare global {

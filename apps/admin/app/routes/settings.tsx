@@ -1,6 +1,6 @@
 import { useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { Form } from 'react-router'
+import { data, Form } from 'react-router'
 import { z } from 'zod'
 import { CheckboxField } from '~/components/checkbox-field'
 import { CheckboxGroupField } from '~/components/checkbox-group-field'
@@ -60,6 +60,10 @@ const UserSubscriptionSchema = z.object({
 		.min(3, 'You must select at least three interest'),
 	code: z.string().length(6, 'Code must be 6 characters long'),
 })
+
+export async function loader() {
+	return data({})
+}
 
 export default function Settings() {
 	const [form, fields] = useForm({

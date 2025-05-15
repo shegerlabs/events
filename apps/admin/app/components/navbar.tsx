@@ -51,14 +51,16 @@ export default function Navbar({
 						</svg>
 					</Link>
 
-					<nav className="flex items-center space-x-6">
-						<Link
-							to="/settings"
-							className="hover:text-primary text-sm font-medium transition-colors"
-						>
-							Settings
-						</Link>
-					</nav>
+					{user && (
+						<nav className="flex items-center space-x-6">
+							<Link
+								to="/settings"
+								className="hover:text-primary text-sm font-medium transition-colors"
+							>
+								Settings
+							</Link>
+						</nav>
+					)}
 				</div>
 
 				<div className="flex items-center space-x-2">

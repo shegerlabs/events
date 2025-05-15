@@ -16,7 +16,7 @@ export function UserDropdown() {
 	const formRef = useRef<HTMLFormElement>(null)
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="bg-background flex h-8 w-8 items-center justify-center rounded-full border">
+			<DropdownMenuTrigger className="bg-background hover:bg-accent hover:text-accent-foreground flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
 				<User className="h-4 w-4" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
@@ -24,17 +24,17 @@ export function UserDropdown() {
 					{user.firstName} {user.lastName}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem>
+				<DropdownMenuItem className="cursor-pointer">
 					<User className="mr-2 h-4 w-4" />
 					<span>Profile</span>
 				</DropdownMenuItem>
-				<DropdownMenuItem>
+				<DropdownMenuItem className="cursor-pointer">
 					<Settings className="mr-2 h-4 w-4" />
 					<span>Account</span>
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<Form action="/logout" method="POST" ref={formRef}>
-					<DropdownMenuItem asChild>
+					<DropdownMenuItem asChild className="cursor-pointer">
 						<button type="submit" className="w-full">
 							<LogOut className="mr-2 h-4 w-4" />
 							<span>Logout</span>

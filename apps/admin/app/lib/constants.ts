@@ -2,7 +2,7 @@ import type { VerificationTypes } from './types'
 
 export const sessionKey = 'sessionId'
 export const onboardingEmailSessionKey = 'onboardingEmail'
-export const resetPasswordUsernameSessionKey = 'resetPasswordUsername'
+export const resetPasswordEmailSessionKey = 'resetPasswordEmail'
 export const newEmailAddressSessionKey = 'newEmailAddress'
 export const twoFAVerifyVerificationType = '2fa-verify'
 export const twoFAVerificationType = '2fa' satisfies VerificationTypes

@@ -1,6 +1,6 @@
 import { getFormProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { data, Form, redirect, useSearchParams } from 'react-router'
+import { data, Form, Link, redirect, useSearchParams } from 'react-router'
 import { AuthenticityTokenInput } from 'remix-utils/csrf/react'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { safeRedirect } from 'remix-utils/safe-redirect'
@@ -159,7 +159,7 @@ export default function LoginRoute({ actionData }: Route.ComponentProps) {
 
 	return (
 		<div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-			<div className="w-full max-w-sm">
+			<div className="w-full max-w-lg">
 				<div className="flex flex-col gap-6">
 					<Card>
 						<CardHeader>
@@ -189,12 +189,12 @@ export default function LoginRoute({ actionData }: Route.ComponentProps) {
 									<Field>
 										<div className="flex items-center">
 											<Label htmlFor="password">Password</Label>
-											<a
-												href="#"
+											<Link
+												to="/forgot-password"
 												className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
 											>
 												Forgot your password?
-											</a>
+											</Link>
 										</div>
 										<InputField
 											meta={fields.password}
@@ -210,7 +210,7 @@ export default function LoginRoute({ actionData }: Route.ComponentProps) {
 
 									<div className="flex flex-col gap-3">
 										<StatusButton
-											className="w-full"
+											className="w-full cursor-pointer"
 											status={isPending ? 'pending' : (form.status ?? 'idle')}
 											type="submit"
 											disabled={isPending}
@@ -222,9 +222,9 @@ export default function LoginRoute({ actionData }: Route.ComponentProps) {
 
 								<div className="mt-4 text-center text-sm">
 									Don&apos;t have an account?{' '}
-									<a href="#" className="underline underline-offset-4">
+									<Link to="/signup" className="underline underline-offset-4">
 										Sign up
-									</a>
+									</Link>
 								</div>
 							</Form>
 						</CardContent>

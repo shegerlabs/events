@@ -150,6 +150,59 @@ export async function verifyUserPassword(
 	return { id: userWithPassword.id, tenantId: userWithPassword.tenantId }
 }
 
+export async function getPasswordHash(password: string) {
+	const hash = await bcrypt.hash(password, 10)
+	return hash
+}
+
+export async function signup({
+	email,
+	username,
+	password,
+	firstName,
+	lastName,
+	request,
+}: {
+	email: User['email']
+	username: User['username']
+	firstName: User['firstName']
+	lastName: User['lastName']
+	password: string
+	request: Request
+}) {
+	const hashedPassword = await getPasswordHash(password)
+
+	const metadata = {
+		fingerprint: generateFingerprint(request),
+	}
+
+	const session = await prisma.session.create({
+		select: { id: true, expiresAt: true },
+		data: {
+			expiresAt: getSessionExpirationDate(),
+			metadata,
+			user: {
+				create: {
+					email: email.toLowerCase(),
+					username: username.toLowerCase(),
+					firstName,
+					lastName,
+					roles: {
+						connect: [{ name: 'user' }],
+					},
+					password: {
+						create: {
+							hash: hashedPassword,
+						},
+					},
+				},
+			},
+		},
+	})
+
+	return session
+}
+
 export async function login({
 	username,
 	password,
@@ -286,5 +339,55 @@ export async function requireAnonymous(request: Request) {
 
 	if (userId) {
 		throw redirect('/')
+	}
+}
+
+export async function resetUserPassword({
+	email,
+	password,
+}: {
+	email: User['email']
+	password: string
+}) {
+	const hashedPassword = await bcrypt.hash(password, 10)
+
+	// First check if the user has a password entry
+	const user = await prisma.user.findUnique({
+		where: { email },
+		include: { password: true },
+	})
+
+	if (!user) {
+		throw new Error(`User with email ${email} not found`)
+	}
+
+	// If the user has an existing password, update it
+	if (user.password) {
+		return prisma.user.update({
+			select: { id: true },
+			where: { email },
+			data: {
+				password: {
+					update: {
+						hash: hashedPassword,
+						lastChanged: new Date(),
+					},
+				},
+			},
+		})
+	}
+	// If the user doesn't have a password entry yet, create one
+	else {
+		return prisma.user.update({
+			select: { id: true },
+			where: { email },
+			data: {
+				password: {
+					create: {
+						hash: hashedPassword,
+					},
+				},
+			},
+		})
 	}
 }
