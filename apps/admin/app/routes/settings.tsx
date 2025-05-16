@@ -1,24 +1,21 @@
-import { useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
-import { AlertCircle } from 'lucide-react'
-import { data, Form } from 'react-router'
-import { z } from 'zod'
-import { CheckboxField } from '~/components/checkbox-field'
-import { CheckboxGroupField } from '~/components/checkbox-group-field'
-import { CountryPickerField } from '~/components/country-picker-field'
-import { DatePickerField } from '~/components/date-picker-field'
+import {
+	AlertCircle,
+	Bell,
+	Code,
+	CreditCard,
+	Lock,
+	Settings,
+	Shield,
+	User,
+} from 'lucide-react'
+import { data, NavLink, Outlet, useLocation, useNavigation } from 'react-router'
 import { ErrorCard, GeneralErrorBoundary } from '~/components/error-boundary'
-import { Field, FieldError } from '~/components/field'
-import { InputField } from '~/components/input-field'
-import { OtpField } from '~/components/otp-field'
-import { RadioGroupField } from '~/components/radio-group-field'
-import { SelectField } from '~/components/select-field'
-import { SliderField } from '~/components/slider-field'
-import { SwitchField } from '~/components/switch-field'
-import { TextareaField } from '~/components/textarea-field'
 import { Button } from '~/components/ui/button'
-import { Label } from '~/components/ui/label'
+import { ScrollArea } from '~/components/ui/scroll-area'
+import { Separator } from '~/components/ui/separator'
+import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet'
 import { requireUserWithRoles } from '~/lib/permission.server'
+import { cn } from '~/lib/utils'
 import type { Route } from './+types/settings'
 
 export function meta({}: Route.MetaArgs) {
@@ -28,176 +25,126 @@ export function meta({}: Route.MetaArgs) {
 	]
 }
 
-const UserSubscriptionSchema = z.object({
-	name: z
-		.string({ required_error: 'Name is required' })
-		.min(3, { message: 'Name must be at least 3 characters long' }),
-	dateOfBirth: z
-		.date({
-			required_error: 'Date of birth is required',
-			invalid_type_error: 'Invalid date',
-		})
-		.max(new Date(), { message: 'Date of birth cannot be in the future' }),
-	country: z.string({ required_error: 'Country is required' }),
-	gender: z.enum(['male', 'female', 'other'], {
-		required_error: 'Gender is required',
-	}),
-	agreeToTerms: z.boolean({ required_error: 'You must agree to the terms' }),
-	job: z.enum(['developer', 'designer', 'manager'], {
-		required_error: 'You must select a job',
-	}),
-	age: z.number().min(18, 'You must have be more than 18'),
-	isAdult: z
-		.boolean()
-		.optional()
-		.refine(val => val == true, 'You must be an adult'),
-	description: z.string().min(10, 'Description must be at least 10 characters'),
-	accountType: z.enum(['personal', 'business'], {
-		required_error: 'You must select an account type',
-	}),
-	accountTypes: z
-		.array(z.enum(['personal', 'business']))
-		.min(1, 'You must select at least one account type'),
-	interests: z
-		.array(z.string())
-		.min(3, 'You must select at least three interest'),
-	code: z.string().length(6, 'Code must be 6 characters long'),
-})
-
 export async function loader({ request }: Route.LoaderArgs) {
 	await requireUserWithRoles(request, ['admin'])
 	return data({})
 }
 
-export default function Settings() {
-	const [form, fields] = useForm({
-		id: 'signup',
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: UserSubscriptionSchema })
+const SettingsRoute = () => {
+	const location = useLocation()
+	const navigation = useNavigation()
+	const isLoading = navigation.state === 'loading'
+
+	const navItems = [
+		{
+			title: 'General',
+			to: '/settings/general',
+			icon: Settings,
 		},
-		onSubmit(e) {
-			e.preventDefault()
-			const form = e.currentTarget
-			const formData = new FormData(form)
-			const result = parseWithZod(formData, { schema: UserSubscriptionSchema })
-			alert(JSON.stringify(result, null, 2))
+		{
+			title: 'Profile',
+			to: '/settings/profile',
+			icon: User,
 		},
-		shouldRevalidate: 'onInput',
-	})
+		{
+			title: 'Billing',
+			to: '/settings/billing',
+			icon: CreditCard,
+		},
+		{
+			title: 'Notifications',
+			to: '/settings/notifications',
+			icon: Bell,
+		},
+		{
+			title: 'Security',
+			to: '/settings/security',
+			icon: Lock,
+		},
+		{
+			title: 'Privacy',
+			to: '/settings/privacy',
+			icon: Shield,
+		},
+		{
+			title: 'Appearance',
+			to: '/settings/appearance',
+			icon: Code,
+		},
+	]
+
+	const currentNavItem = navItems.find(
+		item =>
+			location.pathname === item.to ||
+			(item.to === '/settings' && location.pathname === '/settings/'),
+	)
+
+	const NavContent = () => (
+		<nav className="flex flex-col gap-2">
+			{navItems.map(item => (
+				<NavLink
+					key={item.to}
+					to={item.to}
+					className={({ isActive }) =>
+						cn(
+							'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+							isActive
+								? 'bg-muted text-foreground'
+								: 'text-muted-foreground hover:bg-muted hover:text-foreground',
+						)
+					}
+					end={item.to === '/settings'}
+				>
+					<item.icon className="h-5 w-5" />
+					{item.title}
+				</NavLink>
+			))}
+		</nav>
+	)
 
 	return (
-		<div className="flex h-screen flex-col gap-6 overflow-y-auto p-10">
-			<h1 className="text-2xl">Shadcn + Conform example</h1>
-			<Form
-				method="POST"
-				id={form.id}
-				onSubmit={form.onSubmit}
-				className="flex flex-col items-start gap-4"
-			>
-				<Field>
-					<Label htmlFor={fields.name.id}>Name</Label>
-					<InputField meta={fields.name} type="text" />
-					{fields.name.errors && <FieldError>{fields.name.errors}</FieldError>}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.dateOfBirth.id}>Birth date</Label>
-					<DatePickerField meta={fields.dateOfBirth} />
-					{fields.dateOfBirth.errors && (
-						<FieldError>{fields.dateOfBirth.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.country.id}>Country</Label>
-					<CountryPickerField meta={fields.country} />
-					{fields.country.errors && (
-						<FieldError>{fields.country.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.gender.id}>Gender</Label>
-					<RadioGroupField
-						meta={fields.gender}
-						items={[
-							{ value: 'male', label: 'male' },
-							{ value: 'female', label: 'female' },
-							{ value: 'other', label: 'other' },
-						]}
-					/>
-					{fields.gender.errors && (
-						<FieldError>{fields.gender.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<div className="flex items-center gap-2">
-						<CheckboxField meta={fields.agreeToTerms} />
-						<Label htmlFor={fields.agreeToTerms.id}>Agree to terms</Label>
-					</div>
-					{fields.agreeToTerms.errors && (
-						<FieldError>{fields.agreeToTerms.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.job.id}>Job</Label>
-					<SelectField
-						placeholder="Select a job"
-						meta={fields.job}
-						items={[
-							{ value: 'developer', name: 'Developer' },
-							{ value: 'designer', name: 'Design' },
-							{ value: 'manager', name: 'Manager' },
-						]}
-					/>
-					{fields.job.errors && <FieldError>{fields.job.errors}</FieldError>}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.age.id}>Age</Label>
-					<SliderField meta={fields.age} step={1} />
-					{fields.age.errors && <FieldError>{fields.age.errors}</FieldError>}
-				</Field>
-				<Field>
-					<div className="flex items-center gap-2">
-						<Label htmlFor={fields.isAdult.id}>Is adult</Label>
-						<SwitchField meta={fields.isAdult} />
-					</div>
-					{fields.isAdult.errors && (
-						<FieldError>{fields.isAdult.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.description.id}>Description</Label>
-					<TextareaField meta={fields.description} />
-					{fields.description.errors && (
-						<FieldError>{fields.description.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<fieldset>Interests</fieldset>
-					<CheckboxGroupField
-						meta={fields.interests}
-						items={[
-							{ value: 'react', name: 'React' },
-							{ value: 'vue', name: 'Vue' },
-							{ value: 'svelte', name: 'Svelte' },
-							{ value: 'angular', name: 'Angular' },
-						]}
-					/>
-					{fields.interests.errors && (
-						<FieldError>{fields.interests.errors}</FieldError>
-					)}
-				</Field>
-				<Field>
-					<Label htmlFor={fields.code.id}>Code</Label>
-					<OtpField meta={fields.code} length={6} />
-					{fields.code.errors && <FieldError>{fields.code.errors}</FieldError>}
-				</Field>
-
-				<div className="flex gap-2">
-					<Button type="submit">Submit</Button>
-					<Button type="reset" variant="outline">
-						Reset
-					</Button>
+		<div className="relative h-full flex-col space-y-4 p-4 md:flex">
+			<div className="flex items-center justify-between space-y-2">
+				<div>
+					<h2 className="text-lg tracking-tight">Settings</h2>
+					<p className="text-muted-foreground">
+						Manage your account settings and preferences.
+					</p>
 				</div>
-			</Form>
+				<div className="flex items-center space-x-2">
+					<Sheet>
+						<SheetTrigger asChild>
+							<Button variant="outline" className="md:hidden">
+								<Settings className="mr-2 h-4 w-4" />
+								Menu
+							</Button>
+						</SheetTrigger>
+						<SheetContent side="left" className="w-[300px] sm:w-[400px]">
+							<ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10">
+								<NavContent />
+							</ScrollArea>
+						</SheetContent>
+					</Sheet>
+				</div>
+			</div>
+			<Separator />
+			<div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+				<aside className="hidden md:col-span-2 md:block">
+					<ScrollArea className="h-[calc(100vh-16rem)]">
+						<NavContent />
+					</ScrollArea>
+				</aside>
+				<main className="md:col-span-10">
+					<div
+						className={cn(
+							'relative',
+							isLoading && 'pointer-events-none opacity-50',
+						)}
+					>
+						<Outlet />
+					</div>
+				</main>
+			</div>
 		</div>
 	)
 }
@@ -218,3 +165,5 @@ export function ErrorBoundary() {
 		/>
 	)
 }
+
+export default SettingsRoute
