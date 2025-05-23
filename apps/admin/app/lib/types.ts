@@ -39,3 +39,9 @@ export type VerifyFunctionArgs = {
 	submission: Submission<z.infer<typeof VerifySchema>>
 	body: FormData | URLSearchParams
 }
+
+export type SettingsNavItem = {
+	title: string
+	to: string
+	icon: React.ComponentType<{ className?: string }>
+}

@@ -57,10 +57,10 @@ export default function Navbar({
 					{isAdmin && (
 						<nav className="flex items-center space-x-6">
 							<Link
-								to="/settings"
+								to="/settings/entity-types"
 								className="hover:text-primary text-sm font-medium transition-colors"
 							>
-								Settings
+								Entities
 							</Link>
 						</nav>
 					)}
