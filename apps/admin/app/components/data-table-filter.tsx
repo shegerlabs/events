@@ -1,180 +1,161 @@
-'use client'
-
 import { Search } from 'lucide-react'
-import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useId } from 'react'
+import { Form, Link, useSearchParams, useSubmit } from 'react-router'
+import { useDebounce, useIsPending } from '~/lib/utils'
 import { Button } from './ui/button'
+import { Icon } from './ui/icon'
+import type { IconName } from './ui/icons/types'
 import { Input } from './ui/input'
+import { Label } from './ui/label'
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from './ui/select'
+import { StatusButton } from './ui/status-button'
 
-// Sample fields with their types
-const sampleFields = [
-	{ id: 'all', label: 'All Fields', type: 'all' },
-	{ id: 'id', label: 'ID', type: 'string' },
-	{ id: 'email', label: 'Email', type: 'string' },
-	{ id: 'status', label: 'Status', type: 'string' },
-	{ id: 'amount', label: 'Amount', type: 'number' },
-	{ id: 'createdAt', label: 'Date', type: 'date' },
-]
+export default function DataTableFilter({
+	status,
+	autoSubmit = false,
+	action,
+	filters,
+	extras,
+}: {
+	status: 'idle' | 'pending' | 'success' | 'error'
+	autoSubmit?: boolean
+	action: string
+	filters?: Array<{
+		name: string
+		label: string
+		type: 'select' | 'input'
+		options?: Array<{ value: string; label: string }>
+	}>
+	extras?: {
+		label: string
+		to: string
+		icon: IconName
+		type?: 'link' | 'anchor'
+	}[]
+}) {
+	const id = useId()
+	const [searchParams] = useSearchParams()
+	const submit = useSubmit()
+	const isSubmitting = useIsPending({
+		formMethod: 'GET',
+		formAction: action,
+	})
 
-export type FilterOption = {
-	value: string
-	label: string
-}
+	const handleFormChange = useDebounce((form: HTMLFormElement) => {
+		const formData = new FormData(form)
+		const filteredData = new URLSearchParams()
 
-export type AdditionalFilter = {
-	id: string
-	label: string
-	options: FilterOption[]
-}
-
-export type FilterState = {
-	search: {
-		field: string
-		term: string
-	}
-	additionalFilters: Record<string, string>
-}
-
-export type SimpleFilterProps = {
-	onSearch: (filterState: FilterState) => void
-	isLoading?: boolean
-	additionalFilters?: AdditionalFilter[]
-	extraButtons?: React.ReactNode
-}
-
-export type MatchType = 'exact' | 'contains'
-
-export const SimpleFilter = ({
-	onSearch,
-	isLoading = false,
-	additionalFilters = [],
-	extraButtons,
-}: SimpleFilterProps) => {
-	const [field, setField] = useState<string>('all')
-	const [term, setTerm] = useState<string>('')
-	const [additionalFilterValues, setAdditionalFilterValues] = useState<
-		Record<string, string>
-	>({})
-
-	// Initialize additional filter values
-	useEffect(() => {
-		const initialValues: Record<string, string> = {}
-		additionalFilters.forEach(filter => {
-			initialValues[filter.id] = ''
-		})
-		setAdditionalFilterValues(initialValues)
-	}, [additionalFilters])
-
-	const handleSearch = () => {
-		onSearch({
-			search: {
-				field,
-				term,
-			},
-			additionalFilters: additionalFilterValues,
-		})
-	}
-
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter' && !isLoading) {
-			handleSearch()
+		for (const [key, value] of formData.entries()) {
+			if (typeof value === 'string' && value.trim() !== '') {
+				filteredData.append(key, value)
+			}
 		}
-	}
 
-	const handleAdditionalFilterChange = (filterId: string, value: string) => {
-		setAdditionalFilterValues(prev => ({
-			...prev,
-			[filterId]: value,
-		}))
-
-		// Auto-search when dropdown value changes
-		setTimeout(() => {
-			onSearch({
-				search: {
-					field,
-					term,
-				},
-				additionalFilters: {
-					...additionalFilterValues,
-					[filterId]: value,
-				},
-			})
-		}, 0)
-	}
+		submit(filteredData, { method: 'GET', action })
+	}, 400)
 
 	return (
-		<div className="flex w-full flex-wrap items-center gap-2">
-			{/* Additional filter dropdowns first */}
-			{additionalFilters.map(filter => (
-				<Select
-					key={filter.id}
-					value={additionalFilterValues[filter.id] || 'all'}
-					onValueChange={value =>
-						handleAdditionalFilterChange(filter.id, value)
-					}
-				>
-					<SelectTrigger className="h-9 w-[130px] text-sm">
-						<SelectValue placeholder={filter.label} />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All {filter.label}</SelectItem>
-						{filter.options.map(option => (
-							<SelectItem key={option.value} value={option.value}>
-								{option.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			))}
+		<div className="flex-1">
+			<Form
+				method="GET"
+				action={action}
+				className="flex flex-col gap-4"
+				onChange={e => autoSubmit && handleFormChange(e.currentTarget)}
+				onSubmit={e => {
+					e.preventDefault()
+					handleFormChange(e.currentTarget)
+				}}
+			>
+				{filters && (
+					<div className="flex flex-wrap gap-2">
+						{filters.map(filter => {
+							const defaultValue = searchParams.get(filter.name) || ''
 
-			{/* Field selector next */}
-			<Select value={field} onValueChange={setField}>
-				<SelectTrigger className="h-9 w-[150px] text-sm">
-					<SelectValue placeholder="Select field" />
-				</SelectTrigger>
-				<SelectContent>
-					{sampleFields.map(field => (
-						<SelectItem key={field.id} value={field.id}>
-							{field.label}
-						</SelectItem>
+							return (
+								<div key={filter.name} className="min-w-[180px] flex-1">
+									{filter.type === 'select' ? (
+										<Select name={filter.name} defaultValue={defaultValue}>
+											<SelectTrigger className="w-full">
+												<SelectValue placeholder={filter.label} />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectGroup>
+													<SelectLabel>{filter.label}</SelectLabel>
+													{filter.options?.map(option => (
+														<SelectItem key={option.value} value={option.value}>
+															{option.label}
+														</SelectItem>
+													))}
+												</SelectGroup>
+											</SelectContent>
+										</Select>
+									) : (
+										<Input
+											type="text"
+											name={filter.name}
+											id={filter.name}
+											placeholder={filter.label}
+											defaultValue={defaultValue}
+											className="w-full"
+										/>
+									)}
+								</div>
+							)
+						})}
+					</div>
+				)}
+
+				<div className="flex items-center gap-2">
+					<div className="flex-1">
+						<Label htmlFor={id} className="sr-only">
+							Search
+						</Label>
+						<Input
+							type="search"
+							name="search"
+							id={id}
+							defaultValue={searchParams.get('search') ?? ''}
+							placeholder="Search"
+							className="w-full"
+						/>
+					</div>
+					<StatusButton
+						type="submit"
+						status={isSubmitting ? 'pending' : status}
+						className="flex cursor-pointer items-center justify-center"
+						size="sm"
+					>
+						<Search className="h-4 w-4" />
+						<span className="sr-only">Search</span>
+					</StatusButton>
+					{extras?.map(extra => (
+						<Button key={extra.label} asChild size="sm">
+							{extra.type === 'anchor' ? (
+								<a
+									href={`${extra.to}${searchParams.size ? '?' + searchParams.toString() : ''}`}
+									className="gap-1"
+								>
+									{extra.icon && <Icon name={extra.icon} size="sm" />}
+									{extra.label}
+								</a>
+							) : (
+								<Link to={extra.to} className="gap-1">
+									{extra.icon && <Icon name={extra.icon} size="sm" />}
+									{extra.label}
+								</Link>
+							)}
+						</Button>
 					))}
-				</SelectContent>
-			</Select>
-
-			{/* Search input and button last */}
-			<Input
-				className="h-9 min-w-[200px] flex-1 text-sm"
-				placeholder="Search term..."
-				value={term}
-				onChange={e => setTerm(e.target.value)}
-				onKeyDown={handleKeyDown}
-			/>
-
-			<div className="flex items-center gap-2">
-				<Button
-					onClick={handleSearch}
-					disabled={isLoading}
-					size="sm"
-					variant="outline"
-					aria-label="Search"
-				>
-					{isLoading ? (
-						<div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-					) : (
-						<Search className="h-3.5 w-3.5" />
-					)}
-				</Button>
-
-				{/* Extra buttons */}
-				{extraButtons}
-			</div>
+				</div>
+			</Form>
 		</div>
 	)
 }

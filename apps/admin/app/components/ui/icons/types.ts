@@ -6,6 +6,7 @@ export const iconNames = [
   "plus",
   "pencil-2",
   "moon",
+  "magnifying-glass",
   "laptop",
   "exit",
   "download",

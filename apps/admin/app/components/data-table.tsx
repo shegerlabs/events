@@ -1,5 +1,3 @@
-'use client'
-
 import {
 	type ColumnDef,
 	flexRender,
@@ -17,8 +15,8 @@ import {
 	TableHeader,
 	TableRow,
 } from '~/components/ui/table'
+import DataTableFilter from './data-table-filter'
 import { DataTablePagination } from './data-table-pagination'
-import { DataTableViewOptions } from './data-table-view-options'
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[]
@@ -53,7 +51,7 @@ export function DataTable<TData, TValue>({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<DataTableViewOptions table={table} />
+			<DataTableFilter action="/settings/entity-types" status="idle" />
 
 			<div className="rounded-md border">
 				<Table>
@@ -83,10 +81,7 @@ export function DataTable<TData, TValue>({
 									data-state={row.getIsSelected() && 'selected'}
 								>
 									{row.getVisibleCells().map(cell => (
-										<TableCell
-											key={cell.id}
-											data-label={cell.column.columnDef.header}
-										>
+										<TableCell key={cell.id}>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),

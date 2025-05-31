@@ -16,13 +16,18 @@ import {
 import { createSearch } from '~/lib/search.server'
 import type { Route } from './+types'
 
-export const loader = async () => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	const url = new URL(request.url)
+	const search = url.searchParams.get('search')
+
 	const entityTypeService = createSearch(prisma.entityType)
 
 	const entityTypes = await entityTypeService.findWithOffset(
 		{ page: 1, pageSize: 10 },
 		{
-			searchFields: [],
+			searchFields: search
+				? [{ field: 'name', value: search, operator: 'contains' }]
+				: [],
 		},
 	)
 

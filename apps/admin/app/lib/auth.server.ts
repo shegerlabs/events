@@ -95,7 +95,6 @@ export async function verifyUserPassword(
 		const updates = {
 			failedLoginAttempts: failedAttempts,
 			lastFailedLoginAt: new Date(),
-			status: undefined as 'LOCKED' | undefined,
 			lockedAt: undefined as Date | undefined,
 			lockReason: undefined as string | undefined,
 			lockCount: undefined as number | undefined,
@@ -105,7 +104,6 @@ export async function verifyUserPassword(
 		// Lock account if max attempts reached
 		if (failedAttempts >= AUTH_SETTINGS.MAX_LOGIN_ATTEMPTS) {
 			const finalLockCount = (userWithPassword.lockCount || 0) + 1
-			updates.status = 'LOCKED'
 			updates.lockedAt = new Date()
 			updates.lockReason = 'Too many failed login attempts'
 			updates.lockCount = finalLockCount
@@ -119,9 +117,10 @@ export async function verifyUserPassword(
 			where: { id: userWithPassword.id },
 			data: {
 				...updates,
-				userStatus: {
-					update: { name: updates.status as 'LOCKED' | undefined },
-				},
+				userStatus:
+					failedAttempts >= AUTH_SETTINGS.MAX_LOGIN_ATTEMPTS
+						? { update: { name: 'LOCKED' } }
+						: undefined,
 			},
 		})
 
