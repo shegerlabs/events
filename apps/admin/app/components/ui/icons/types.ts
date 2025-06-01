@@ -10,7 +10,11 @@ export const iconNames = [
   "laptop",
   "exit",
   "download",
+  "double-arrow-right",
+  "double-arrow-left",
   "cross-1",
+  "chevron-right",
+  "chevron-left",
   "check",
   "avatar",
 ] as const

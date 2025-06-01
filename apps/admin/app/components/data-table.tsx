@@ -5,7 +5,6 @@ import {
 	getPaginationRowModel,
 	useReactTable,
 } from '@tanstack/react-table'
-
 import React from 'react'
 import {
 	Table,
@@ -19,20 +18,24 @@ import DataTableFilter from './data-table-filter'
 import { DataTablePagination } from './data-table-pagination'
 
 interface DataTableProps<TData, TValue> {
+	handler: string
 	columns: ColumnDef<TData, TValue>[]
 	data: TData[]
+	page: number
+	pageSize: number
+	totalCount: number
 	initialState?: {
-		pagination: {
-			pageIndex: number
-			pageSize: number
-		}
 		columnVisibility: Record<string, boolean>
 	}
 }
 
 export function DataTable<TData, TValue>({
+	handler,
 	columns,
 	data,
+	page,
+	pageSize,
+	totalCount,
 	initialState,
 }: DataTableProps<TData, TValue>) {
 	const [rowSelection, setRowSelection] = React.useState({})
@@ -44,14 +47,19 @@ export function DataTable<TData, TValue>({
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		onRowSelectionChange: setRowSelection,
+		manualPagination: true,
 		state: {
 			rowSelection,
+			pagination: {
+				pageIndex: page - 1,
+				pageSize,
+			},
 		},
 	})
 
 	return (
 		<div className="flex flex-col gap-4">
-			<DataTableFilter action="/settings/entity-types" status="idle" />
+			<DataTableFilter handler={handler} status="idle" />
 
 			<div className="rounded-md border">
 				<Table>
@@ -104,7 +112,11 @@ export function DataTable<TData, TValue>({
 				</Table>
 			</div>
 
-			<DataTablePagination table={table} />
+			<DataTablePagination
+				currentPage={page}
+				pageSize={pageSize}
+				totalCount={totalCount}
+			/>
 		</div>
 	)
 }

@@ -1,12 +1,12 @@
-import { type Table } from '@tanstack/react-table'
+import * as React from 'react'
+import { useSearchParams } from 'react-router'
 import {
-	ChevronLeft,
-	ChevronRight,
-	ChevronsLeft,
-	ChevronsRight,
-} from 'lucide-react'
-
-import { Button } from '~/components/ui/button'
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+} from '~/components/ui/pagination'
 import {
 	Select,
 	SelectContent,
@@ -14,84 +14,151 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/components/ui/select'
+import { Icon } from './ui/icon'
 
-interface DataTablePaginationProps<TData> {
-	table: Table<TData>
+export function setSearchParamsString(
+	searchParams: URLSearchParams,
+	changes: Record<string, string | number | undefined>,
+) {
+	const newSearchParams = new URLSearchParams(searchParams)
+	for (const [key, value] of Object.entries(changes)) {
+		if (value === undefined) {
+			newSearchParams.delete(key)
+			continue
+		}
+		newSearchParams.set(key, String(value))
+	}
+	return newSearchParams.toString()
 }
 
-export function DataTablePagination<TData>({
-	table,
-}: DataTablePaginationProps<TData>) {
+type DataTablePaginationProps = {
+	currentPage: number // 1-based
+	pageSize: number | 'All'
+	totalCount: number
+}
+
+const PAGE_SIZE_OPTIONS = [2, 5, 10, 20, 50, 100, 'All'] as const
+
+export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
+	currentPage,
+	pageSize,
+	totalCount,
+}) => {
+	const [searchParams] = useSearchParams()
+	const totalPages =
+		pageSize === 'All'
+			? 1
+			: Math.max(1, Math.ceil(totalCount / Number(pageSize)))
+
+	const pageNumbers = new Set<number>()
+	pageNumbers.add(1)
+	const startPage = Math.max(2, currentPage - 2)
+	const endPage = Math.min(currentPage + 2, totalPages - 1)
+	for (let i = startPage; i <= endPage; i++) {
+		pageNumbers.add(i)
+	}
+	if (totalPages > 1) pageNumbers.add(totalPages)
+	const pagesArray = Array.from(pageNumbers).sort((a, b) => a - b)
+
 	return (
-		<div className="flex items-center justify-between px-2">
-			<div className="text-muted-foreground flex-1 text-sm">
-				{table.getFilteredSelectedRowModel().rows.length} of{' '}
-				{table.getFilteredRowModel().rows.length} row(s) selected.
-			</div>
-			<div className="flex items-center space-x-6 lg:space-x-8">
-				<div className="flex items-center space-x-2">
-					<p className="text-sm font-medium">Rows per page</p>
+		<Pagination className="mt-2 justify-end">
+			<PaginationContent>
+				<PaginationItem>
 					<Select
-						value={`${table.getState().pagination.pageSize}`}
+						defaultValue={String(pageSize)}
 						onValueChange={value => {
-							table.setPageSize(Number(value))
+							// Reset to page 1 on size change
+							window.scrollTo({ top: 0, behavior: 'smooth' })
+							location.search = setSearchParamsString(searchParams, {
+								page: 1,
+								pageSize: value,
+							})
 						}}
 					>
-						<SelectTrigger className="h-8 w-[70px]">
-							<SelectValue placeholder={table.getState().pagination.pageSize} />
+						<SelectTrigger className="w-[100px]">
+							<SelectValue placeholder={String(pageSize)} />
 						</SelectTrigger>
-						<SelectContent side="top">
-							{[10, 20, 30, 40, 50].map(pageSize => (
-								<SelectItem key={pageSize} value={`${pageSize}`}>
-									{pageSize}
+						<SelectContent>
+							{PAGE_SIZE_OPTIONS.map(opt => (
+								<SelectItem key={opt} value={String(opt)}>
+									{opt}
 								</SelectItem>
 							))}
 						</SelectContent>
 					</Select>
-				</div>
-				<div className="flex w-[100px] items-center justify-center text-sm font-medium">
-					Page {table.getState().pagination.pageIndex + 1} of{' '}
-					{table.getPageCount()}
-				</div>
-				<div className="flex items-center space-x-2">
-					<Button
-						variant="outline"
-						className="hidden h-8 w-8 p-0 lg:flex"
-						onClick={() => table.setPageIndex(0)}
-						disabled={!table.getCanPreviousPage()}
+				</PaginationItem>
+				<PaginationItem>
+					<PaginationLink
+						to={{
+							search: setSearchParamsString(searchParams, {
+								page: 1,
+							}),
+						}}
+						isActive={currentPage === 1}
+						isDisabled={currentPage === 1}
 					>
-						<span className="sr-only">Go to first page</span>
-						<ChevronsLeft />
-					</Button>
-					<Button
-						variant="outline"
-						className="h-8 w-8 p-0"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
+						<Icon name="double-arrow-left" />
+					</PaginationLink>
+				</PaginationItem>
+				<PaginationItem>
+					<PaginationLink
+						to={{
+							search: setSearchParamsString(searchParams, {
+								page: currentPage - 1,
+							}),
+						}}
+						isDisabled={currentPage === 1}
 					>
-						<span className="sr-only">Go to previous page</span>
-						<ChevronLeft />
-					</Button>
-					<Button
-						variant="outline"
-						className="h-8 w-8 p-0"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
+						<Icon name="chevron-left" />
+					</PaginationLink>
+				</PaginationItem>
+				{pagesArray.map((page, i, array) => (
+					<React.Fragment key={page}>
+						{i > 0 && page - array[i - 1] > 1 && (
+							<PaginationItem>
+								<PaginationEllipsis />
+							</PaginationItem>
+						)}
+						<PaginationItem>
+							<PaginationLink
+								to={{
+									search: setSearchParamsString(searchParams, {
+										page,
+									}),
+								}}
+								isActive={currentPage === page}
+							>
+								{page}
+							</PaginationLink>
+						</PaginationItem>
+					</React.Fragment>
+				))}
+				<PaginationItem>
+					<PaginationLink
+						to={{
+							search: setSearchParamsString(searchParams, {
+								page: currentPage + 1,
+							}),
+						}}
+						isDisabled={currentPage === totalPages}
 					>
-						<span className="sr-only">Go to next page</span>
-						<ChevronRight />
-					</Button>
-					<Button
-						variant="outline"
-						className="hidden h-8 w-8 p-0 lg:flex"
-						onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-						disabled={!table.getCanNextPage()}
+						<Icon name="chevron-right" />
+					</PaginationLink>
+				</PaginationItem>
+				<PaginationItem>
+					<PaginationLink
+						to={{
+							search: setSearchParamsString(searchParams, {
+								page: totalPages,
+							}),
+						}}
+						isActive={currentPage === totalPages}
+						isDisabled={currentPage === totalPages}
 					>
-						<span className="sr-only">Go to last page</span>
-						<ChevronsRight />
-					</Button>
-				</div>
-			</div>
-		</div>
+						<Icon name="double-arrow-right" />
+					</PaginationLink>
+				</PaginationItem>
+			</PaginationContent>
+		</Pagination>
 	)
 }

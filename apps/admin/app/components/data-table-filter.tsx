@@ -21,13 +21,13 @@ import { StatusButton } from './ui/status-button'
 export default function DataTableFilter({
 	status,
 	autoSubmit = false,
-	action,
+	handler,
 	filters,
 	extras,
 }: {
 	status: 'idle' | 'pending' | 'success' | 'error'
 	autoSubmit?: boolean
-	action: string
+	handler: string
 	filters?: Array<{
 		name: string
 		label: string
@@ -46,7 +46,7 @@ export default function DataTableFilter({
 	const submit = useSubmit()
 	const isSubmitting = useIsPending({
 		formMethod: 'GET',
-		formAction: action,
+		formAction: handler,
 	})
 
 	const handleFormChange = useDebounce((form: HTMLFormElement) => {
@@ -59,14 +59,14 @@ export default function DataTableFilter({
 			}
 		}
 
-		submit(filteredData, { method: 'GET', action })
+		submit(filteredData, { method: 'GET', action: handler })
 	}, 400)
 
 	return (
 		<div className="flex-1">
 			<Form
 				method="GET"
-				action={action}
+				action={handler}
 				className="flex flex-col gap-4"
 				onChange={e => autoSubmit && handleFormChange(e.currentTarget)}
 				onSubmit={e => {

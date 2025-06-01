@@ -19,11 +19,13 @@ import type { Route } from './+types'
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const url = new URL(request.url)
 	const search = url.searchParams.get('search')
+	const page = Number(url.searchParams.get('page')) || 1
+	const pageSize = Number(url.searchParams.get('pageSize')) || 2
 
 	const entityTypeService = createSearch(prisma.entityType)
 
-	const entityTypes = await entityTypeService.findWithOffset(
-		{ page: 1, pageSize: 10 },
+	const result = await entityTypeService.findWithOffset(
+		{ page, pageSize },
 		{
 			searchFields: search
 				? [{ field: 'name', value: search, operator: 'contains' }]
@@ -31,7 +33,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		},
 	)
 
-	return data({ entityTypes })
+	return data({
+		entityTypes: result.items,
+		totalCount: result.totalCount,
+		page,
+		pageSize,
+	})
 }
 
 const columns: ColumnDef<EntityType>[] = [
@@ -94,16 +101,16 @@ const columns: ColumnDef<EntityType>[] = [
 ]
 
 export default function IndexRoute({ loaderData }: Route.ComponentProps) {
-	const { entityTypes } = loaderData
+	const { entityTypes, totalCount, page, pageSize } = loaderData
 
 	return (
 		<DataTable
+			handler="/settings/entity-types"
 			columns={columns}
-			data={entityTypes.items}
-			initialState={{
-				pagination: { pageIndex: 0, pageSize: 10 },
-				columnVisibility: {},
-			}}
+			data={entityTypes}
+			page={page}
+			pageSize={pageSize}
+			totalCount={totalCount}
 		/>
 	)
 }
