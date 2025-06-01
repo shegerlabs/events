@@ -1,18 +1,9 @@
 import { prisma, type EntityType } from '@repo/database'
-import { type ColumnDef } from '@tanstack/react-table'
-import { AlertCircle, MoreHorizontal } from 'lucide-react'
-import { data } from 'react-router'
+import { AlertCircle } from 'lucide-react'
+import { data, useNavigate } from 'react-router'
 import { DataTable } from '~/components/data-table'
-import { DataTableColumnHeader } from '~/components/data-table-column-header'
+import { createColumns } from '~/components/data-table-columns'
 import { ErrorCard, GeneralErrorBoundary } from '~/components/error-boundary'
-import { Button } from '~/components/ui/button'
-import { Checkbox } from '~/components/ui/checkbox'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
 import { createSearch } from '~/lib/search.server'
 import type { Route } from './+types'
 
@@ -21,6 +12,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	const search = url.searchParams.get('search')
 	const page = Number(url.searchParams.get('page')) || 1
 	const pageSize = Number(url.searchParams.get('pageSize')) || 2
+	const sortBy = url.searchParams.get('sortBy')
+	const sortDirection = url.searchParams.get('sortDirection') as
+		| 'asc'
+		| 'desc'
+		| null
 
 	const entityTypeService = createSearch(prisma.entityType)
 
@@ -30,6 +26,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 			searchFields: search
 				? [{ field: 'name', value: search, operator: 'contains' }]
 				: [],
+			orderBy: sortBy
+				? [
+						{
+							field: sortBy as keyof EntityType,
+							direction: sortDirection || 'asc',
+						},
+					]
+				: [
+						{
+							field: 'name',
+							direction: 'asc',
+						},
+					],
 		},
 	)
 
@@ -41,76 +50,67 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	})
 }
 
-const columns: ColumnDef<EntityType>[] = [
-	{
-		id: 'select',
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && 'indeterminate')
-				}
-				onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={value => row.toggleSelected(!!value)}
-				aria-label="Select row"
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
-	{
-		accessorKey: 'name',
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Name" />
-		),
-	},
-	{
-		accessorKey: 'description',
-		header: 'Description',
-	},
-	{
-		id: 'actions',
-		header: 'Actions',
-		cell: ({ row }) => {
-			const entityType = row.original
-			return (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="h-8 w-8 cursor-pointer p-0">
-							<span className="sr-only">Open menu</span>
-							<MoreHorizontal className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem className="cursor-pointer">View</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer">Edit</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer">
-							Delete
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			)
-		},
-	},
-]
-
 export default function IndexRoute({ loaderData }: Route.ComponentProps) {
 	const { entityTypes, totalCount, page, pageSize } = loaderData
+	const navigate = useNavigate()
 
 	return (
 		<DataTable
 			handler="/settings/entity-types"
-			columns={columns}
 			data={entityTypes}
 			page={page}
 			pageSize={pageSize}
 			totalCount={totalCount}
+			selectable
+			defaultSort={{ id: 'name', desc: false }}
+			columns={createColumns<EntityType>([
+				{
+					type: 'text',
+					field: 'name',
+					label: 'Name',
+					sortable: true,
+				},
+				{
+					type: 'text',
+					field: 'description',
+					label: 'Description',
+					sortable: true,
+				},
+				{
+					type: 'actions',
+					label: 'Actions',
+					actions: [
+						{
+							label: 'View',
+							onClick: data => navigate(`/settings/entity-types/${data.id}`),
+						},
+						{
+							label: 'Edit',
+							onClick: data =>
+								navigate(`/settings/entity-types/${data.id}/edit`),
+						},
+						{
+							label: 'Delete',
+							onClick: data => {
+								if (
+									confirm('Are you sure you want to delete this entity type?')
+								) {
+									// TODO: Implement delete functionality
+									console.log('Delete', data)
+								}
+							},
+						},
+					],
+				},
+			])}
+			extras={[
+				{
+					label: 'New',
+					type: 'link',
+					to: '/settings/entity-types/new',
+					icon: 'plus',
+				},
+			]}
 		/>
 	)
 }

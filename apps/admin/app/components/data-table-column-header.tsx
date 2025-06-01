@@ -1,12 +1,12 @@
 import type { Column } from '@tanstack/react-table'
-import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import { useSearchParams, useSubmit } from 'react-router'
 
 import { Button } from '~/components/ui/button'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { cn } from '~/lib/utils'
@@ -22,8 +22,29 @@ export function DataTableColumnHeader<TData, TValue>({
 	title,
 	className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
+	const [searchParams] = useSearchParams()
+	const submit = useSubmit()
+
 	if (!column.getCanSort()) {
 		return <div className={cn(className)}>{title}</div>
+	}
+
+	const handleSort = (direction: 'asc' | 'desc') => {
+		// Update the column's sort state immediately
+		column.toggleSorting(direction === 'desc')
+
+		const formData = new FormData()
+		formData.append('sortBy', column.id)
+		formData.append('sortDirection', direction)
+
+		// Preserve existing search params
+		for (const [key, value] of searchParams.entries()) {
+			if (key !== 'sortBy' && key !== 'sortDirection') {
+				formData.append(key, value)
+			}
+		}
+
+		submit(formData, { method: 'GET' })
 	}
 
 	return (
@@ -46,18 +67,13 @@ export function DataTableColumnHeader<TData, TValue>({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start">
-					<DropdownMenuItem onClick={() => column.toggleSorting(false)}>
+					<DropdownMenuItem onClick={() => handleSort('asc')}>
 						<ArrowUp className="text-muted-foreground/70 h-3.5 w-3.5" />
 						Asc
 					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => column.toggleSorting(true)}>
+					<DropdownMenuItem onClick={() => handleSort('desc')}>
 						<ArrowDown className="text-muted-foreground/70 h-3.5 w-3.5" />
 						Desc
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-						<EyeOff className="text-muted-foreground/70 h-3.5 w-3.5" />
-						Hide
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

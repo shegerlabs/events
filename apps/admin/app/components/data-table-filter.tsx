@@ -53,6 +53,7 @@ export default function DataTableFilter({
 		const formData = new FormData(form)
 		const filteredData = new URLSearchParams()
 
+		// Preserve existing search params
 		for (const [key, value] of formData.entries()) {
 			if (typeof value === 'string' && value.trim() !== '') {
 				filteredData.append(key, value)

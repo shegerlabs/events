@@ -60,14 +60,23 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 	if (totalPages > 1) pageNumbers.add(totalPages)
 	const pagesArray = Array.from(pageNumbers).sort((a, b) => a - b)
 
+	const startItem =
+		pageSize === 'All' ? 1 : (currentPage - 1) * Number(pageSize) + 1
+	const endItem =
+		pageSize === 'All'
+			? totalCount
+			: Math.min(currentPage * Number(pageSize), totalCount)
+
 	return (
-		<Pagination className="mt-2 justify-end">
+		<Pagination className="mt-2 items-center justify-between">
+			<div className="text-muted-foreground text-sm">
+				Showing {startItem} to {endItem} of {totalCount}
+			</div>
 			<PaginationContent>
 				<PaginationItem>
 					<Select
 						defaultValue={String(pageSize)}
 						onValueChange={value => {
-							// Reset to page 1 on size change
 							window.scrollTo({ top: 0, behavior: 'smooth' })
 							location.search = setSearchParamsString(searchParams, {
 								page: 1,
@@ -75,7 +84,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 							})
 						}}
 					>
-						<SelectTrigger className="w-[100px]">
+						<SelectTrigger className="w-[100px]" aria-label="Select page size">
 							<SelectValue placeholder={String(pageSize)} />
 						</SelectTrigger>
 						<SelectContent>
@@ -96,6 +105,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 						}}
 						isActive={currentPage === 1}
 						isDisabled={currentPage === 1}
+						aria-label="Go to first page"
 					>
 						<Icon name="double-arrow-left" />
 					</PaginationLink>
@@ -108,6 +118,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 							}),
 						}}
 						isDisabled={currentPage === 1}
+						aria-label="Go to previous page"
 					>
 						<Icon name="chevron-left" />
 					</PaginationLink>
@@ -116,7 +127,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 					<React.Fragment key={page}>
 						{i > 0 && page - array[i - 1] > 1 && (
 							<PaginationItem>
-								<PaginationEllipsis />
+								<PaginationEllipsis aria-hidden="true" />
 							</PaginationItem>
 						)}
 						<PaginationItem>
@@ -127,6 +138,8 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 									}),
 								}}
 								isActive={currentPage === page}
+								aria-label={`Go to page ${page}`}
+								aria-current={currentPage === page ? 'page' : undefined}
 							>
 								{page}
 							</PaginationLink>
@@ -141,6 +154,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 							}),
 						}}
 						isDisabled={currentPage === totalPages}
+						aria-label="Go to next page"
 					>
 						<Icon name="chevron-right" />
 					</PaginationLink>
@@ -154,6 +168,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 						}}
 						isActive={currentPage === totalPages}
 						isDisabled={currentPage === totalPages}
+						aria-label="Go to last page"
 					>
 						<Icon name="double-arrow-right" />
 					</PaginationLink>

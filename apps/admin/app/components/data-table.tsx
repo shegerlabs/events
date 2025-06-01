@@ -3,9 +3,11 @@ import {
 	flexRender,
 	getCoreRowModel,
 	getPaginationRowModel,
+	getSortedRowModel,
 	useReactTable,
 } from '@tanstack/react-table'
 import React from 'react'
+import { useSearchParams } from 'react-router'
 import {
 	Table,
 	TableBody,
@@ -16,6 +18,31 @@ import {
 } from '~/components/ui/table'
 import DataTableFilter from './data-table-filter'
 import { DataTablePagination } from './data-table-pagination'
+import { Checkbox } from './ui/checkbox'
+
+declare module '@tanstack/react-table' {
+	interface ColumnMeta<TData extends unknown, TValue> {
+		className?: string
+	}
+}
+
+type IconName =
+	| 'update'
+	| 'sun'
+	| 'plus'
+	| 'pencil-2'
+	| 'moon'
+	| 'magnifying-glass'
+	| 'laptop'
+	| 'exit'
+	| 'download'
+	| 'double-arrow-right'
+	| 'double-arrow-left'
+	| 'cross-1'
+	| 'chevron-right'
+	| 'chevron-left'
+	| 'check'
+	| 'avatar'
 
 interface DataTableProps<TData, TValue> {
 	handler: string
@@ -24,9 +51,23 @@ interface DataTableProps<TData, TValue> {
 	page: number
 	pageSize: number
 	totalCount: number
-	initialState?: {
-		columnVisibility: Record<string, boolean>
+	selectable?: boolean
+	defaultSort?: {
+		id: string
+		desc: boolean
 	}
+	filters?: Array<{
+		name: string
+		label: string
+		type: 'input' | 'select'
+		options?: Array<{ value: string; label: string }>
+	}>
+	extras?: Array<{
+		label: string
+		type: 'link' | 'anchor'
+		to: string
+		icon: IconName
+	}>
 }
 
 export function DataTable<TData, TValue>({
@@ -36,18 +77,67 @@ export function DataTable<TData, TValue>({
 	page,
 	pageSize,
 	totalCount,
-	initialState,
+	selectable = false,
+	defaultSort,
+	filters = [],
+	extras = [],
 }: DataTableProps<TData, TValue>) {
 	const [rowSelection, setRowSelection] = React.useState({})
+	const [searchParams] = useSearchParams()
+
+	const sortBy = searchParams.get('sortBy')
+	const sortDirection = searchParams.get('sortDirection') as
+		| 'asc'
+		| 'desc'
+		| null
+
+	const selectColumn: ColumnDef<TData, TValue> = {
+		id: 'select',
+		header: ({ table }) => (
+			<Checkbox
+				checked={
+					table.getIsAllPageRowsSelected() ||
+					(table.getIsSomePageRowsSelected() && 'indeterminate')
+				}
+				onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+				aria-label="Select all"
+			/>
+		),
+		cell: ({ row }) => (
+			<Checkbox
+				checked={row.getIsSelected()}
+				onCheckedChange={value => row.toggleSelected(!!value)}
+				aria-label="Select row"
+			/>
+		),
+		enableSorting: false,
+		enableHiding: false,
+		meta: {
+			className: 'w-[40px]',
+		},
+	}
 
 	const table = useReactTable({
 		data,
-		columns,
-		initialState,
+		columns: selectable ? [selectColumn, ...columns] : columns,
+		initialState: {
+			sorting: sortBy
+				? [
+						{
+							id: sortBy,
+							desc: sortDirection === 'desc',
+						},
+					]
+				: defaultSort
+					? [defaultSort]
+					: [],
+		},
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
 		onRowSelectionChange: setRowSelection,
 		manualPagination: true,
+		manualSorting: true,
 		state: {
 			rowSelection,
 			pagination: {
@@ -59,7 +149,12 @@ export function DataTable<TData, TValue>({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<DataTableFilter handler={handler} status="idle" />
+			<DataTableFilter
+				handler={handler}
+				status="idle"
+				filters={filters}
+				extras={extras}
+			/>
 
 			<div className="rounded-md border">
 				<Table>
@@ -68,7 +163,10 @@ export function DataTable<TData, TValue>({
 							<TableRow key={headerGroup.id}>
 								{headerGroup.headers.map(header => {
 									return (
-										<TableHead key={header.id}>
+										<TableHead
+											key={header.id}
+											className={header.column.columnDef.meta?.className}
+										>
 											{header.isPlaceholder
 												? null
 												: flexRender(
@@ -89,7 +187,10 @@ export function DataTable<TData, TValue>({
 									data-state={row.getIsSelected() && 'selected'}
 								>
 									{row.getVisibleCells().map(cell => (
-										<TableCell key={cell.id}>
+										<TableCell
+											key={cell.id}
+											className={cell.column.columnDef.meta?.className}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),
